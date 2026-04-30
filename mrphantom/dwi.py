@@ -281,17 +281,3 @@ class DWIPhantom(MRPhantom):
                 f"{type(self).__name__}.signal_img accessed before synthesize()."
             )
         return self._signal_img
-
-    # ------------------------------------------------------------------
-    # Introspection — extends base get_params
-    # ------------------------------------------------------------------
-
-    def get_params(self) -> dict:
-        """Return all constructor parameters.
-
-        Returns
-        -------
-        dict
-            ``{"snr": ..., "seed": ...}``
-        """
-        return {"snr": self.snr, "seed": self.seed}
