@@ -14,3 +14,6 @@ dependencies = [
 
 [project.scripts]
 mrphantom="mrphantom.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["mrphantom*"]
