@@ -1,8 +1,8 @@
-"""I/O sub-package for mrsim.
+"""I/O sub-package for mrphantom.
 
 Public API::
 
-    from mrsim.io import save_nifti, save_hdf5, load_hdf5, PhantomData
+    from mrphantom.io import save_nifti, save_hdf5, load_hdf5, PhantomData
 """
 
 from .hdf5 import PhantomData, load_hdf5, save_hdf5

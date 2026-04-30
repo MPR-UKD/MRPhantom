@@ -37,7 +37,7 @@ def synthesize_phantom(
     where ``N_re, N_im ~ Normal(0, σ)`` and ``σ = max(S0) / snr``.
 
     Args:
-        config: Fully loaded :class:`~mrsim.config.PhantomConfig`.
+        config: Fully loaded :class:`~mrphantom.config.PhantomConfig`.
         snr:    Signal-to-noise ratio.  Pass ``None`` to skip noise entirely.
         rng:    Optional seeded :class:`numpy.random.Generator` for
                 reproducibility.  A new generator is created if ``None``.

@@ -28,7 +28,7 @@ def get_evaluation_segments(config: PhantomConfig) -> list[int]:
     if the user provides a phantom JSON with different label numbering.
 
     Args:
-        config: Loaded :class:`~mrsim.config.PhantomConfig`.
+        config: Loaded :class:`~mrphantom.config.PhantomConfig`.
 
     Returns:
         Sorted list of integer segment indices present in *config* whose name
