@@ -35,6 +35,7 @@ from ..config import PhantomConfig
 # Return type for load_hdf5
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PhantomData:
     """All arrays and metadata loaded from a saved phantom HDF5 file.
@@ -72,6 +73,7 @@ class PhantomData:
 # Writer
 # ---------------------------------------------------------------------------
 
+
 def save_hdf5(
     signal: np.ndarray,
     signal_img: nib.Nifti1Image,
@@ -88,10 +90,10 @@ def save_hdf5(
 
     Args:
         signal:      4-D ``float64`` signal array ``(X, Y, Z, n_bvalues)``
-                     from :func:`~mrsim.synthesis.synthesize_phantom`.
+                     from :func:`~mrphantom.synthesis.synthesize_phantom`.
         signal_img:  Corresponding :class:`nibabel.Nifti1Image` (used for the
                      affine matrix).
-        config:      :class:`~mrsim.config.PhantomConfig` used to synthesize
+        config:      :class:`~mrphantom.config.PhantomConfig` used to synthesize
                      *signal* (provides metadata and segmentation path).
         out_path:    Destination file path.  The suffix ``.h5`` is appended
                      automatically if the path does not end in ``.h5`` or
@@ -108,9 +110,7 @@ def save_hdf5(
         FileNotFoundError: If *config.nifti_path* does not exist.
     """
     if not config.nifti_path.is_file():
-        raise FileNotFoundError(
-            f"Segmentation NIfTI not found: {config.nifti_path}"
-        )
+        raise FileNotFoundError(f"Segmentation NIfTI not found: {config.nifti_path}")
 
     out_path = Path(out_path)
     suffixes = "".join(out_path.suffixes).lower()
@@ -129,9 +129,7 @@ def save_hdf5(
             "signal", data=signal.astype(np.float64), compression=compression
         )
         f.create_dataset("bvalues", data=config.bvalues.astype(np.float64))
-        f.create_dataset(
-            "segmentation", data=seg_data, compression=compression
-        )
+        f.create_dataset("segmentation", data=seg_data, compression=compression)
         f.create_dataset("affine", data=signal_img.affine.astype(np.float64))
 
         # Root-level metadata
@@ -147,6 +145,7 @@ def save_hdf5(
 # ---------------------------------------------------------------------------
 # Reader
 # ---------------------------------------------------------------------------
+
 
 def load_hdf5(path: Path | str) -> PhantomData:
     """Load a phantom HDF5 file written by :func:`save_hdf5`.
@@ -166,17 +165,15 @@ def load_hdf5(path: Path | str) -> PhantomData:
         raise FileNotFoundError(f"HDF5 file not found: {path}")
 
     with h5py.File(path, "r") as f:
-        signal: np.ndarray = f["signal"][()]          # type: ignore[index]
-        bvalues: np.ndarray = f["bvalues"][()]         # type: ignore[index]
-        segmentation: np.ndarray = f["segmentation"][()] # type: ignore[index]
-        affine: np.ndarray = f["affine"][()]           # type: ignore[index]
+        signal: np.ndarray = f["signal"][()]  # type: ignore[index]
+        bvalues: np.ndarray = f["bvalues"][()]  # type: ignore[index]
+        segmentation: np.ndarray = f["segmentation"][()]  # type: ignore[index]
+        affine: np.ndarray = f["affine"][()]  # type: ignore[index]
 
         case_id: str = str(f.attrs["case_id"])
         name: str = str(f.attrs["name"])
         description: str = str(f.attrs["description"])
-        snr: float | None = (
-            float(f.attrs["snr"]) if "snr" in f.attrs else None
-        )
+        snr: float | None = float(f.attrs["snr"]) if "snr" in f.attrs else None
 
     return PhantomData(
         signal=signal,
