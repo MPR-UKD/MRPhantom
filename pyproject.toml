@@ -1,7 +1,7 @@
 [project]
 name = "mrphantom"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "Synthetic MRI diffusion-weighted phantom synthesis library and CLI"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -9,11 +9,17 @@ dependencies = [
 	"numpy>=1.26",
 	"nibabel>=5.0",
 	"h5py>=3.10.0",
-	"pathlib>=1.0.1"
+	"tomli>=1.2; python_version < '3.11'",
 ]
 
 [project.scripts]
 mrphantom="mrphantom.cli:main"
 
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
 [tool.setuptools.packages.find]
 include = ["mrphantom*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
