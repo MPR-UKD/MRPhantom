@@ -66,8 +66,8 @@ The JSON file describes the phantom case metadata and the diffusion parameters f
   "case_id":     "kidney_001",
   "name":        "kid_cor_ang_001",
   "description": "Synthetic abdomen segmentation with multiple regions.",
-  "source":      "R.Kampmann-Nephworks_edited",
-  "date":        "2025-08-19",
+  "source":      "<Author_Source>",
+  "date":        "<YYYY-MM-DD>",
 
   "file": "kid_001_cor_ang.nii.gz",
 
