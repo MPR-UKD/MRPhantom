@@ -151,15 +151,15 @@ def test_run_command(runner, assets_dir, tmp_path):
 
     # Also replicate the case paths relative to patched_toml location → need
     # absolute paths so we patch those too.
-    case_dir = assets_dir / "kidney" / "case_001"
-    json_abs = case_dir / "kid_001_cor_ang.json"
-    bval_abs = case_dir / "bvals.txt"
+    case_dir = assets_dir / "kidney" / "case_000"
+    json_abs = case_dir / "kid_000_synthetic.json"
+    bval_abs = case_dir / "kidney.bval"
     patched2 = patched_toml.read_text()
     patched2 = patched2.replace(
-        'config = "case_001/kid_001_cor_ang.json"',
+        'config = "case_000/kid_000_synthetic.json"',
         f'config = "{json_abs.as_posix()}"',
     ).replace(
-        'bvals  = "case_001/bvals.txt"',
+        'bvals  = "case_000/kidney.bval"',
         f'bvals  = "{bval_abs.as_posix()}"',
     )
     patched_toml.write_text(patched2)
@@ -176,7 +176,7 @@ def test_run_command(runner, assets_dir, tmp_path):
 def test_info_command(runner, json_path, bval_path):
     result = runner.invoke(main, ["info", str(json_path), str(bval_path)])
     assert result.exit_code == 0, result.output
-    assert "kidney_001" in result.output
+    assert "kidney_000" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +199,7 @@ def test_inspect_command(runner, json_path, bval_path, tmp_path):
     )
     result = runner.invoke(main, ["inspect", str(h5)])
     assert result.exit_code == 0, result.output
-    assert "kidney_001" in result.output
+    assert "kidney_000" in result.output
 
 
 def test_inspect_missing_file(runner, tmp_path):

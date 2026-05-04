@@ -12,8 +12,8 @@ from mrphantom import DWIPhantom, load_phantom_config
 
 # 1. Load case data — parses JSON, loads b-values, resolves null regions
 config = load_phantom_config(
-    Path("assets/kidney/case_001/kid_001_cor_ang.json"),
-    Path("assets/kidney/case_001/bvals.txt"),
+    Path("assets/kidney/case_000/kid_000_synthetic.json"),
+    Path("assets/kidney/case_000/kidney.bval"),
 )
 
 # 2. Create the phantom — only acquisition settings go here, no data yet
@@ -39,8 +39,8 @@ Or use the convenience factory to load and configure in one line:
 
 ```python
 phantom = DWIPhantom.from_json(
-    "assets/kidney/case_001/kid_001_cor_ang.json",
-    "assets/kidney/case_001/bvals.txt",
+    "assets/kidney/case_000/kid_000_synthetic.json",
+    "assets/kidney/case_000/kidney.bval",
     snr=30,
     seed=42,
 )

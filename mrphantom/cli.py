@@ -154,8 +154,8 @@ def run(toml_file: Path) -> None:
         formats           = ["nifti", "hdf5"]
 
         [[cases]]
-        config = "assets/kidney/case_001/kid_001_cor_ang.json"
-        bvals  = "assets/kidney/case_001/bvals.txt"
+        config = "assets/kidney/case_000/kid_000_synthetic.json"
+        bvals  = "assets/kidney/case_000/kidney.bval"
     """
     click.echo(f"Loading run config: {toml_file}")
     run_cfg = load_run_config(toml_file)

@@ -7,10 +7,10 @@
 ## Directory layout
 
 ```
-case_001/
-├── kid_001_cor_ang.json      ← phantom configuration (regions, diffusion parameters)
-├── kid_001_cor_ang.nii.gz    ← NIfTI integer segmentation label map
-└── bvals.txt                 ← b-values used during synthesis
+case_000/
+├── kid_000_synthetic.json    ← phantom configuration (regions, diffusion parameters)
+├── kid_000_synthetic.nii.gz  ← NIfTI integer segmentation label map
+└── kidney.bval               ← b-values used during synthesis
 ```
 
 The JSON file references the NIfTI by a relative path (`"file"` field), so the two files must stay together. The b-values file is supplied separately and does not need to share the same name or directory, though co-locating them is conventional.
@@ -148,19 +148,19 @@ The number of values determines the fourth dimension of the synthesized output: 
 
 ## Complete example
 
-The bundled example case is at `assets/kidney/case_001/`. Load it with:
+The bundled example case is at `assets/kidney/case_000/`. Load it with:
 
 ```python
 from pathlib import Path
 from mrphantom import load_phantom_config
 
 config = load_phantom_config(
-    Path("assets/kidney/case_001/kid_001_cor_ang.json"),
-    Path("assets/kidney/case_001/bvals.txt"),
+    Path("assets/kidney/case_000/kid_000_synthetic.json"),
+    Path("assets/kidney/case_000/kidney.bval"),
 )
 
-print(config.case_id)          # "kidney_001"
-print(config.image_dims)       # [176, 3, 176]
+print(config.case_id)          # "kidney_000"
+print(config.image_dims)       # [176, 176, 3]
 print(len(config.regions))     # 11
-print(config.bvalues)          # [  0.  50. 100. 200. 400. 800.]
+print(config.bvalues)          # [  0.   5.  10. ...]
 ```

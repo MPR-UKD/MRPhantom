@@ -42,7 +42,7 @@ def test_from_json_returns_dwiphantom(json_path, bval_path):
 def test_from_json_config_is_loaded(json_path, bval_path):
     p = DWIPhantom.from_json(json_path, bval_path)
     assert isinstance(p.config, DWIConfig)
-    assert p.config.case_id == "kidney_001"
+    assert p.config.case_id == "kidney_000"
 
 
 def test_from_json_passes_snr_seed(json_path, bval_path):

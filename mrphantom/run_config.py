@@ -21,8 +21,8 @@ TOML schema
     formats           = ["nifti", "hdf5"]
 
     [[cases]]
-    config = "assets/kidney/case_001/kid_001_cor_ang.json"
-    bvals  = "assets/kidney/case_001/bvals.txt"
+    config = "assets/kidney/case_000/kid_000_synthetic.json"
+    bvals  = "assets/kidney/case_000/kidney.bval"
 
     [[cases]]
     config = "assets/kidney/case_002/kid_002.json"

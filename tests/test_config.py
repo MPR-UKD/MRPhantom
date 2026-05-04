@@ -35,7 +35,7 @@ def test_load_dwi_config_returns_dwi_config(phantom_config):
 
 
 def test_dwi_config_case_id(phantom_config):
-    assert phantom_config.case_id == "kidney_001"
+    assert phantom_config.case_id == "kidney_000"
 
 
 def test_dwi_config_bvalues_shape(phantom_config):

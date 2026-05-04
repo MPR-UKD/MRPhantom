@@ -2,10 +2,10 @@
 
 Provides:
 - ``assets_dir``  — Path to the bundled assets directory.
-- ``case_dir``    — Path to the kidney case_001 directory.
+- ``case_dir``    — Path to the kidney case_000 directory.
 - ``json_path``   — Path to kid_001_cor_ang.json.
 - ``bval_path``   — Path to bvals.txt.
-- ``phantom_config`` — Pre-loaded DWIConfig for kidney_001.
+- ``phantom_config`` — Pre-loaded DWIConfig for kidney_000.
 - ``mini_config`` — A minimal in-memory DWIConfig backed by a tiny
                     synthetic NIfTI (avoids loading the real 176×3×176 image
                     in fast unit tests).
@@ -28,7 +28,7 @@ from mrphantom.dwi.config import DWIConfig, RegionConfig, load_dwi_config
 
 REPO_ROOT = Path(__file__).parent.parent
 ASSETS_DIR = REPO_ROOT / "assets"
-CASE_DIR = ASSETS_DIR / "kidney" / "case_001"
+CASE_DIR = ASSETS_DIR / "kidney" / "case_000"
 
 
 @pytest.fixture(scope="session")
@@ -43,7 +43,7 @@ def case_dir() -> Path:
 
 @pytest.fixture(scope="session")
 def json_path() -> Path:
-    return CASE_DIR / "kid_001_cor_ang.json"
+    return CASE_DIR / "kid_000_synthetic.json"
 
 
 @pytest.fixture(scope="session")
@@ -53,7 +53,7 @@ def bval_path() -> Path:
 
 @pytest.fixture(scope="session")
 def phantom_config(json_path, bval_path) -> DWIConfig:
-    """Full kidney_001 config (session-scoped — loaded once)."""
+    """Full kidney_000 config (session-scoped — loaded once)."""
     return load_dwi_config(json_path, bval_path)
 
 

@@ -50,8 +50,8 @@ pip install -e .
 from mrphantom import DWIPhantom
 
 phantom = DWIPhantom.from_json(
-    "assets/kidney/case_001/kid_001_cor_ang.json",
-    "assets/kidney/case_001/bvals.txt",
+    "assets/kidney/case_000/kid_000_synthetic.json",
+    "assets/kidney/case_000/kidney.bval",
     snr=30,
     seed=42,
 )

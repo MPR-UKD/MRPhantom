@@ -1,0 +1,12 @@
+[run]
+snr  = 30.0
+seed = 42
+
+[export]
+output_dir        = "output/"
+filename_template = "{case_id}"
+formats           = ["nifti", "hdf5"]
+
+[[cases]]
+config = "case_000/kid_000_synthetic.json"
+bvals  = "case_000/kidney.bval"
