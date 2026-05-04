@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide walks through the `mrphantom` API from first import to saved output.
+> **TL;DR** — Practical walkthrough of the `mrphantom` API. Covers the step-by-step class workflow (**Step-by-step walkthrough**), result access and re-use across cases (**Accessing results**, **Re-using a phantom**), parameter adjustment (**Adjusting parameters**), batch synthesis (**Batch synthesis**), ROI helpers (**ROI evaluation helpers**), and reading saved files back (**Reading back saved files**).
 
 ---
 

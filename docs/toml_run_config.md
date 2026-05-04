@@ -1,6 +1,6 @@
 # TOML Run-Config
 
-The TOML run-config is the top-level orchestration layer for batch synthesis. It lists one or more cases and sets acquisition and export options that apply to all of them. The case JSON files and their segmentation NIfTIs remain untouched.
+> **TL;DR** — Top-level orchestration file for batch synthesis. Covers the complete TOML schema with a ready-to-copy example (**Schema**), field-by-field reference for `[run]`, `[export]`, and `[[cases]]` (**Fields**), output path construction rules (**Output paths**), and the equivalent CLI and programmatic usage (**CLI**).
 
 ---
 

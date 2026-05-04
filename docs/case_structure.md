@@ -1,6 +1,6 @@
 # Case Structure
 
-A **case** is the complete set of inputs needed to synthesize one phantom. It consists of three files that live together in a directory.
+> **TL;DR** — Describes the inputs required to synthesize one phantom. Covers the directory layout (**Directory layout**), the phantom JSON schema including top-level fields and region parameters (**Phantom JSON**), single- and multi-compartment region examples (**Single-compartment vs multi-compartment**), null region fallback behaviour (**Null regions**), NIfTI segmentation conventions (**NIfTI segmentation**), and b-values file format (**B-values file**).
 
 ---
 

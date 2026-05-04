@@ -1,6 +1,6 @@
 # API Reference
 
-Public symbols exported from the `mrphantom` package.
+> **TL;DR** — All public symbols exported from `mrphantom`. Covers the abstract base class (**Base class**), the concrete DWI synthesizer (**Phantom classes**), config and data model types (**Config / data model**), TOML batch config types (**Run config**), the low-level functional API (**Synthesis**), ROI helpers (**ROI helpers**), and I/O functions (**I/O**).
 
 ---
 
