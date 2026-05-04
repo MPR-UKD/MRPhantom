@@ -1,15 +1,12 @@
-"""Tests for mrphantom.roi — get_evaluation_segments, get_fitting_mask."""
+"""Tests for mrphantom.roi and mrphantom.dwi.roi."""
 
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from mrphantom.roi import (
-    EVALUATION_REGION_NAMES,
-    get_evaluation_segments,
-    get_fitting_mask,
-)
+from mrphantom.dwi.roi import EVALUATION_REGION_NAMES, get_evaluation_segments
+from mrphantom.roi import get_fitting_mask
 
 
 # ---------------------------------------------------------------------------

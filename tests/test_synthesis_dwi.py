@@ -1,4 +1,4 @@
-"""Tests for mrphantom.synthesis_dwi — synthesize_phantom."""
+"""Tests for mrphantom.dwi.synthesis — synthesize_phantom."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 import pytest
 
-from mrphantom.synthesis_dwi import synthesize_phantom
+from mrphantom.dwi.synthesis import synthesize_phantom
 
 
 # ---------------------------------------------------------------------------
@@ -109,9 +109,9 @@ def test_synthesize_noise_nonnegative(mini_config):
 
 
 def test_synthesize_missing_nifti_raises(mini_config, tmp_path):
-    from mrphantom.config import PhantomConfig
+    from mrphantom.dwi.config import DWIConfig
 
-    bad_config = PhantomConfig(
+    bad_config = DWIConfig(
         case_id=mini_config.case_id,
         name=mini_config.name,
         description=mini_config.description,

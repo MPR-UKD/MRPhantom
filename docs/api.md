@@ -1,6 +1,6 @@
 # API Reference
 
-> **TL;DR** — All public symbols exported from `mrphantom`. Covers the abstract base class (**Base class**), the concrete DWI synthesizer (**Phantom classes**), config and data model types (**Config / data model**), TOML batch config types (**Run config**), the low-level functional API (**Synthesis**), ROI helpers (**ROI helpers**), and I/O functions (**I/O**).
+> **TL;DR** — All public symbols exported from `mrphantom`. Covers the abstract base class (**Base class**), the concrete DWI synthesizer (**Phantom classes**), DWI config and data model types (**DWI config / data model**), TOML batch config types (**Run config**), the low-level functional API (**Synthesis**), ROI helpers (**ROI helpers**), and I/O functions (**I/O**).
 
 ---
 
@@ -24,23 +24,23 @@ from mrphantom import DWIPhantom
 
 Concrete synthesizer for diffusion-weighted phantoms. Implements the multi-exponential signal model with optional Rician noise.
 
-See [`dwi.py`](../mrphantom/dwi.py) and the [Usage guide](usage.md).
+See [`dwi/phantom.py`](../mrphantom/dwi/phantom.py) and the [Usage guide](usage.md).
 
 ---
 
-## Config / data model
+## DWI config / data model
 
 ```python
-from mrphantom import RegionConfig, PhantomConfig, load_phantom_config
+from mrphantom import RegionConfig, DWIConfig, load_dwi_config
 ```
 
 | Symbol | Description |
 |---|---|
 | `RegionConfig` | Dataclass holding diffusion parameters for one segmented region. |
-| `PhantomConfig` | Dataclass holding the complete parsed case (all regions, b-values, NIfTI path). |
-| `load_phantom_config(json_path, bval_path)` | Parse a phantom JSON + b-values file into a `PhantomConfig`. |
+| `DWIConfig` | Dataclass holding the complete parsed DWI case (all regions, b-values, NIfTI path). |
+| `load_dwi_config(json_path, bval_path)` | Parse a phantom JSON + b-values file into a `DWIConfig`. |
 
-See [`config.py`](../mrphantom/config.py) and the [Case structure guide](case_structure.md).
+See [`dwi/config.py`](../mrphantom/dwi/config.py) and the [Case structure guide](case_structure.md).
 
 ---
 
@@ -67,25 +67,29 @@ See [`run_config.py`](../mrphantom/run_config.py) and the [TOML run-config guide
 from mrphantom import synthesize_phantom
 ```
 
-Low-level functional entry point. Evaluates the multi-exponential signal model for all regions in a `PhantomConfig` and returns the 4-D signal array and a `nibabel.Nifti1Image`. Used internally by `DWIPhantom.synthesize()`.
+Low-level functional entry point. Evaluates the multi-exponential signal model for all regions in a `DWIConfig` and returns the 4-D signal array and a `nibabel.Nifti1Image`. Used internally by `DWIPhantom.synthesize()`.
 
-See [`synthesis_dwi.py`](../mrphantom/synthesis_dwi.py).
+See [`dwi/synthesis.py`](../mrphantom/dwi/synthesis.py).
 
 ---
 
 ## ROI helpers
 
 ```python
-from mrphantom import get_evaluation_segments, get_fitting_mask, EVALUATION_REGION_NAMES
+# General (modality-agnostic)
+from mrphantom import get_fitting_mask
+
+# DWI / kidney evaluation regions
+from mrphantom import get_evaluation_segments, EVALUATION_REGION_NAMES
 ```
 
-| Symbol | Description |
-|---|---|
-| `EVALUATION_REGION_NAMES` | `frozenset` of kidney evaluation region names: `{"cortex", "medulla", "hilum"}`. |
-| `get_evaluation_segments(config)` | Return sorted NIfTI label indices for the evaluation regions in a `PhantomConfig`. |
-| `get_fitting_mask(segmentation, indices)` | Build a boolean 3-D mask selecting the given label indices. |
+| Symbol | Where | Description |
+|---|---|---|
+| `get_fitting_mask(segmentation, indices)` | `mrphantom.roi` | Build a boolean 3-D mask selecting the given label indices. General utility, usable with any segmented phantom. |
+| `EVALUATION_REGION_NAMES` | `mrphantom.dwi.roi` | `frozenset` of kidney evaluation region names: `{"cortex", "medulla", "hilum"}`. |
+| `get_evaluation_segments(config)` | `mrphantom.dwi.roi` | Return sorted NIfTI label indices for the kidney evaluation regions in a `DWIConfig`. |
 
-See [`roi.py`](../mrphantom/roi.py) and the [Usage guide — ROI helpers](usage.md#roi-evaluation-helpers).
+See [`roi.py`](../mrphantom/roi.py), [`dwi/roi.py`](../mrphantom/dwi/roi.py), and the [Usage guide — ROI helpers](usage.md#roi-evaluation-helpers).
 
 ---
 
@@ -98,8 +102,8 @@ from mrphantom import save_nifti, save_hdf5, load_hdf5, PhantomData
 | Symbol | Description |
 |---|---|
 | `save_nifti(signal_img, out_path)` | Save a `nibabel.Nifti1Image` to `.nii` or `.nii.gz`. |
-| `save_hdf5(signal, signal_img, config, out_path, snr)` | Write signal, b-values, segmentation, affine, and metadata to HDF5. |
+| `save_hdf5(signal, signal_img, volumes, segmentation, out_path, ...)` | Write signal, volumes axis, segmentation, affine, and metadata to HDF5. |
 | `load_hdf5(path)` | Read a saved HDF5 phantom file into a `PhantomData` dataclass. |
-| `PhantomData` | Dataclass bundling all arrays and metadata loaded from HDF5, with `as_nifti()`. |
+| `PhantomData` | Dataclass bundling all arrays and metadata loaded from HDF5, with `as_nifti()`. The `volumes` field stores the acquisition-parameter axis (b-values for DWI, TIs for T1, etc.). |
 
 See [`io/`](../mrphantom/io/) and the [Usage guide — Reading back saved files](usage.md#reading-back-saved-files).

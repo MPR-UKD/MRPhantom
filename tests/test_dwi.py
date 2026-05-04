@@ -8,8 +8,8 @@ import nibabel as nib
 import numpy as np
 import pytest
 
-from mrphantom import DWIPhantom, load_phantom_config
-from mrphantom.config import PhantomConfig
+from mrphantom import DWIPhantom, load_dwi_config
+from mrphantom.dwi.config import DWIConfig
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ def test_from_json_returns_dwiphantom(json_path, bval_path):
 
 def test_from_json_config_is_loaded(json_path, bval_path):
     p = DWIPhantom.from_json(json_path, bval_path)
-    assert isinstance(p.config, PhantomConfig)
+    assert isinstance(p.config, DWIConfig)
     assert p.config.case_id == "kidney_001"
 
 

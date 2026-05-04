@@ -8,8 +8,9 @@ import nibabel as nib
 import numpy as np
 import pytest
 
+from mrphantom.dwi.config import DWIConfig
+from mrphantom.dwi.synthesis import synthesize_phantom
 from mrphantom.io import PhantomData, load_hdf5, save_hdf5, save_nifti
-from mrphantom.synthesis_dwi import synthesize_phantom
 
 
 # ---------------------------------------------------------------------------
@@ -69,21 +70,30 @@ def synthesized(mini_config):
 def test_save_hdf5_creates_file(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    result = save_hdf5(signal, signal_img, config, out)
+    result = save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     assert result.is_file()
 
 
 def test_save_hdf5_returns_path(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    result = save_hdf5(signal, signal_img, config, out)
+    result = save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     assert isinstance(result, Path)
 
 
 def test_save_hdf5_appends_extension_if_missing(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "no_ext"
-    result = save_hdf5(signal, signal_img, config, out)
+    result = save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     assert result.suffix == ".h5"
     assert result.is_file()
 
@@ -91,7 +101,10 @@ def test_save_hdf5_appends_extension_if_missing(synthesized, tmp_path):
 def test_load_hdf5_returns_phantom_data(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     data = load_hdf5(out)
     assert isinstance(data, PhantomData)
 
@@ -99,23 +112,33 @@ def test_load_hdf5_returns_phantom_data(synthesized, tmp_path):
 def test_load_hdf5_signal_roundtrip(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     data = load_hdf5(out)
     np.testing.assert_allclose(data.signal, signal, rtol=1e-10)
 
 
-def test_load_hdf5_bvalues_roundtrip(synthesized, tmp_path):
+def test_load_hdf5_volumes_roundtrip(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     data = load_hdf5(out)
-    np.testing.assert_array_equal(data.bvalues, config.bvalues)
+    np.testing.assert_array_equal(data.volumes, config.bvalues)
 
 
 def test_load_hdf5_metadata(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out, snr=25.0)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+        snr=25.0,
+    )
     data = load_hdf5(out)
     assert data.case_id == config.case_id
     assert data.name == config.name
@@ -125,7 +148,11 @@ def test_load_hdf5_metadata(synthesized, tmp_path):
 def test_load_hdf5_snr_none_when_not_stored(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out, snr=None)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+        snr=None,
+    )
     data = load_hdf5(out)
     assert data.snr is None
 
@@ -138,7 +165,10 @@ def test_load_hdf5_missing_file_raises(tmp_path):
 def test_phantom_data_as_nifti(synthesized, tmp_path):
     signal, signal_img, config = synthesized
     out = tmp_path / "out.h5"
-    save_hdf5(signal, signal_img, config, out)
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+    )
     data = load_hdf5(out)
     img = data.as_nifti()
     assert isinstance(img, nib.Nifti1Image)
@@ -147,16 +177,9 @@ def test_phantom_data_as_nifti(synthesized, tmp_path):
 
 def test_save_hdf5_missing_segmentation_raises(synthesized, tmp_path):
     signal, signal_img, config = synthesized
-    from mrphantom.config import PhantomConfig
-
-    bad_config = PhantomConfig(
-        case_id=config.case_id,
-        name=config.name,
-        description=config.description,
-        nifti_path=tmp_path / "ghost.nii.gz",
-        image_dims=config.image_dims,
-        bvalues=config.bvalues,
-        regions=config.regions,
-    )
     with pytest.raises(FileNotFoundError):
-        save_hdf5(signal, signal_img, bad_config, tmp_path / "out.h5")
+        save_hdf5(
+            signal, signal_img, config.bvalues, tmp_path / "ghost.nii.gz",
+            tmp_path / "out.h5",
+            case_id=config.case_id,
+        )

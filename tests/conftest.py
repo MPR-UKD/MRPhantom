@@ -5,8 +5,8 @@ Provides:
 - ``case_dir``    — Path to the kidney case_001 directory.
 - ``json_path``   — Path to kid_001_cor_ang.json.
 - ``bval_path``   — Path to bvals.txt.
-- ``phantom_config`` — Pre-loaded PhantomConfig for kidney_001.
-- ``mini_config`` — A minimal in-memory PhantomConfig backed by a tiny
+- ``phantom_config`` — Pre-loaded DWIConfig for kidney_001.
+- ``mini_config`` — A minimal in-memory DWIConfig backed by a tiny
                     synthetic NIfTI (avoids loading the real 176×3×176 image
                     in fast unit tests).
 - ``mini_nifti``  — The nibabel.Nifti1Image corresponding to mini_config.
@@ -20,7 +20,7 @@ import nibabel as nib
 import numpy as np
 import pytest
 
-from mrphantom.config import PhantomConfig, RegionConfig, load_phantom_config
+from mrphantom.dwi.config import DWIConfig, RegionConfig, load_dwi_config
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -48,13 +48,13 @@ def json_path() -> Path:
 
 @pytest.fixture(scope="session")
 def bval_path() -> Path:
-    return CASE_DIR / "bvals.txt"
+    return CASE_DIR / "kidney.bval"
 
 
 @pytest.fixture(scope="session")
-def phantom_config(json_path, bval_path) -> PhantomConfig:
+def phantom_config(json_path, bval_path) -> DWIConfig:
     """Full kidney_001 config (session-scoped — loaded once)."""
-    return load_phantom_config(json_path, bval_path)
+    return load_dwi_config(json_path, bval_path)
 
 
 # ---------------------------------------------------------------------------
@@ -82,8 +82,8 @@ def mini_nifti(tmp_path):
 
 
 @pytest.fixture
-def mini_config(tmp_path) -> PhantomConfig:
-    """Minimal PhantomConfig with two regions backed by a tiny NIfTI."""
+def mini_config(tmp_path) -> DWIConfig:
+    """Minimal DWIConfig with two regions backed by a tiny NIfTI."""
     nifti_path, _ = _make_mini_nifti(tmp_path)
     bvalues = np.array([0.0, 100.0, 500.0])
     regions = {
@@ -104,7 +104,7 @@ def mini_config(tmp_path) -> PhantomConfig:
             D=[0.001, 0.01],
         ),
     }
-    return PhantomConfig(
+    return DWIConfig(
         case_id="mini_001",
         name="mini",
         description="Minimal test phantom",
