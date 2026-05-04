@@ -69,7 +69,7 @@ from mrphantom import synthesize_phantom
 
 Low-level functional entry point. Evaluates the multi-exponential signal model for all regions in a `PhantomConfig` and returns the 4-D signal array and a `nibabel.Nifti1Image`. Used internally by `DWIPhantom.synthesize()`.
 
-See [`synthesis.py`](../mrphantom/synthesis.py).
+See [`synthesis_dwi.py`](../mrphantom/synthesis_dwi.py).
 
 ---
 

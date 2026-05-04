@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from mrphantom.io import PhantomData, load_hdf5, save_hdf5, save_nifti
-from mrphantom.synthesis import synthesize_phantom
+from mrphantom.synthesis_dwi import synthesize_phantom
 
 
 # ---------------------------------------------------------------------------

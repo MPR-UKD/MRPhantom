@@ -17,7 +17,7 @@ from .dwi import DWIPhantom
 from .io import PhantomData, load_hdf5, save_hdf5, save_nifti
 from .roi import EVALUATION_REGION_NAMES, get_evaluation_segments, get_fitting_mask
 from .run_config import CaseEntry, ExportConfig, RunConfig, load_run_config
-from .synthesis import synthesize_phantom
+from .synthesis_dwi import synthesize_phantom
 
 __all__ = [
     # base

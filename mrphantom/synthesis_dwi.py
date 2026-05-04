@@ -1,4 +1,4 @@
-"""Phantom signal synthesis.
+"""DWI phantom signal synthesis.
 
 Generates a 4-D synthetic DWI image from a :class:`PhantomConfig` by computing
 the multi-exponential diffusion signal for each segmented region:

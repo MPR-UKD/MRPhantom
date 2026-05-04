@@ -1,4 +1,4 @@
-"""Tests for mrphantom.synthesis — synthesize_phantom."""
+"""Tests for mrphantom.synthesis_dwi — synthesize_phantom."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 import pytest
 
-from mrphantom.synthesis import synthesize_phantom
+from mrphantom.synthesis_dwi import synthesize_phantom
 
 
 # ---------------------------------------------------------------------------
