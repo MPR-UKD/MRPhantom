@@ -1,7 +1,7 @@
-"""Phantom data model and JSON config loader.
+"""DWI phantom data model and JSON config loader.
 
 Parses the phantom JSON file (one region per NIfTI segment label) and loads the
-shared b-values file into a :class:`PhantomConfig` ready for signal synthesis.
+shared b-values file into a :class:`DWIConfig` ready for signal synthesis.
 
 Null regions — those with ``S0: null`` or empty ``D`` / ``fractions`` lists —
 automatically inherit all diffusion parameters from the region named
@@ -66,8 +66,8 @@ class RegionConfig:
 
 
 @dataclass
-class PhantomConfig:
-    """Complete description of a synthetic phantom case.
+class DWIConfig:
+    """Complete description of a synthetic DWI phantom case.
 
     Attributes:
         case_id:     Unique case identifier (from JSON ``case_id`` field).
@@ -92,8 +92,8 @@ class PhantomConfig:
 # Loader
 # ---------------------------------------------------------------------------
 
-def load_phantom_config(json_path: Path, bval_path: Path) -> PhantomConfig:
-    """Parse a phantom JSON file and load b-values into a :class:`PhantomConfig`.
+def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
+    """Parse a phantom JSON file and load b-values into a :class:`DWIConfig`.
 
     Regions whose ``S0`` is ``null`` or whose ``D`` / ``fractions`` lists are
     empty inherit all diffusion parameters from the region named
@@ -104,7 +104,7 @@ def load_phantom_config(json_path: Path, bval_path: Path) -> PhantomConfig:
         bval_path: Path to the b-values text file (space- or line-separated).
 
     Returns:
-        Fully resolved :class:`PhantomConfig`.
+        Fully resolved :class:`DWIConfig`.
 
     Raises:
         FileNotFoundError: If either input file does not exist.
@@ -190,7 +190,7 @@ def load_phantom_config(json_path: Path, bval_path: Path) -> PhantomConfig:
             )
         regions[region.index] = region
 
-    return PhantomConfig(
+    return DWIConfig(
         case_id=data["case_id"],
         name=data["name"],
         description=data["description"],

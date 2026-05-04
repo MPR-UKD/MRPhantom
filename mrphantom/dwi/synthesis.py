@@ -1,6 +1,6 @@
 """DWI phantom signal synthesis.
 
-Generates a 4-D synthetic DWI image from a :class:`PhantomConfig` by computing
+Generates a 4-D synthetic DWI image from a :class:`DWIConfig` by computing
 the multi-exponential diffusion signal for each segmented region:
 
     S(b) = S0 * Σ_i ( f_i * exp(-b * D_i) )
@@ -13,11 +13,11 @@ from __future__ import annotations
 import nibabel as nib
 import numpy as np
 
-from .config import PhantomConfig
+from .config import DWIConfig
 
 
 def synthesize_phantom(
-    config: PhantomConfig,
+    config: DWIConfig,
     snr: float | None = None,
     rng: np.random.Generator | None = None,
 ) -> tuple[np.ndarray, nib.Nifti1Image]:
@@ -37,7 +37,7 @@ def synthesize_phantom(
     where ``N_re, N_im ~ Normal(0, σ)`` and ``σ = max(S0) / snr``.
 
     Args:
-        config: Fully loaded :class:`~mrphantom.config.PhantomConfig`.
+        config: Fully loaded :class:`~mrphantom.dwi.config.DWIConfig`.
         snr:    Signal-to-noise ratio.  Pass ``None`` to skip noise entirely.
         rng:    Optional seeded :class:`numpy.random.Generator` for
                 reproducibility.  A new generator is created if ``None``.

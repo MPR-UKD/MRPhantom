@@ -28,7 +28,7 @@ Typical usage
 
     phantom = DWIPhantom(snr=30, seed=42)
     for entry in run_config.cases:
-        cfg = load_phantom_config(entry.config, entry.bvals)
+        cfg = load_dwi_config(entry.config, entry.bvals)
         phantom.load_case(cfg).synthesize().save(f"output/{cfg.case_id}.h5")
 """
 
@@ -39,10 +39,10 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 
-from .base import MRPhantom
-from .config import PhantomConfig, load_phantom_config
-from .io import save_hdf5, save_nifti
-from .synthesis_dwi import synthesize_phantom
+from ..base import MRPhantom
+from ..io import save_hdf5, save_nifti
+from .config import DWIConfig, load_dwi_config
+from .synthesis import synthesize_phantom
 
 
 class DWIPhantom(MRPhantom):
@@ -62,7 +62,7 @@ class DWIPhantom(MRPhantom):
     def __init__(self, *, snr: float | None = None, seed: int | None = None) -> None:
         """Initialise with acquisition parameters only; no case data loaded yet."""
         super().__init__(snr=snr, seed=seed)
-        self._config: PhantomConfig | None = None
+        self._config: DWIConfig | None = None
         self._signal: np.ndarray | None = None
         self._signal_img: nib.Nifti1Image | None = None
 
@@ -84,7 +84,7 @@ class DWIPhantom(MRPhantom):
         Equivalent to::
 
             DWIPhantom(snr=snr, seed=seed).load_case(
-                load_phantom_config(json_path, bval_path)
+                load_dwi_config(json_path, bval_path)
             )
 
         Args:
@@ -97,22 +97,22 @@ class DWIPhantom(MRPhantom):
             DWIPhantom: Instance with the case already loaded, ready to call
             :meth:`synthesize`.
         """
-        config = load_phantom_config(Path(json_path), Path(bval_path))
+        config = load_dwi_config(Path(json_path), Path(bval_path))
         return cls(snr=snr, seed=seed).load_case(config)
 
     # ------------------------------------------------------------------
     # MRPhantom interface
     # ------------------------------------------------------------------
 
-    def load_case(self, config: PhantomConfig) -> "DWIPhantom":
-        """Attach a :class:`~mrphantom.config.PhantomConfig` to this phantom.
+    def load_case(self, config: DWIConfig) -> "DWIPhantom":
+        """Attach a :class:`~mrphantom.dwi.config.DWIConfig` to this phantom.
 
         Clears any previously synthesized signal so that stale results are
         never accessible after a case is swapped.
 
         Args:
-            config: Fully loaded :class:`~mrphantom.config.PhantomConfig` (use
-                :func:`~mrphantom.config.load_phantom_config` to create one).
+            config: Fully loaded :class:`~mrphantom.dwi.config.DWIConfig` (use
+                :func:`~mrphantom.dwi.config.load_dwi_config` to create one).
 
         Returns:
             DWIPhantom: self, enables chaining:
@@ -198,8 +198,12 @@ class DWIPhantom(MRPhantom):
                     save_hdf5(
                         self._signal,
                         self._signal_img,
-                        self._config,
+                        self._config.bvalues,
+                        self._config.nifti_path,
                         out_path,
+                        case_id=self._config.case_id,
+                        name=self._config.name,
+                        description=self._config.description,
                         snr=self.snr,
                     )
                 )
@@ -216,8 +220,8 @@ class DWIPhantom(MRPhantom):
     # ------------------------------------------------------------------
 
     @property
-    def config(self) -> PhantomConfig:
-        """The loaded :class:`~mrphantom.config.PhantomConfig`.
+    def config(self) -> DWIConfig:
+        """The loaded :class:`~mrphantom.dwi.config.DWIConfig`.
 
         Raises:
             RuntimeError: If :meth:`load_case` has not been called.
