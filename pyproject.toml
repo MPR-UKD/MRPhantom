@@ -1,6 +1,6 @@
 [project]
 name = "mrphantom"
-version = "0.2.0"
+version = "0.3.0"
 description = "Synthetic MRI diffusion-weighted phantom synthesis library and CLI"
 readme = "README.md"
 requires-python = ">=3.9"
