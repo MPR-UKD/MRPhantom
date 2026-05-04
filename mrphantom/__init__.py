@@ -12,22 +12,28 @@ Full documentation lives in the ``docs/`` directory:
 """
 
 from .base import MRPhantom
-from .config import PhantomConfig, RegionConfig, load_phantom_config
-from .dwi import DWIPhantom
+from .dwi import (
+    DWIConfig,
+    DWIPhantom,
+    EVALUATION_REGION_NAMES,
+    RegionConfig,
+    get_evaluation_segments,
+    load_dwi_config,
+    synthesize_phantom,
+)
 from .io import PhantomData, load_hdf5, save_hdf5, save_nifti
-from .roi import EVALUATION_REGION_NAMES, get_evaluation_segments, get_fitting_mask
+from .roi import get_fitting_mask
 from .run_config import CaseEntry, ExportConfig, RunConfig, load_run_config
-from .synthesis_dwi import synthesize_phantom
 
 __all__ = [
     # base
     "MRPhantom",
-    # phantom classes
+    # dwi phantom
     "DWIPhantom",
-    # config
+    # dwi config
     "RegionConfig",
-    "PhantomConfig",
-    "load_phantom_config",
+    "DWIConfig",
+    "load_dwi_config",
     # run config
     "RunConfig",
     "CaseEntry",
@@ -35,10 +41,11 @@ __all__ = [
     "load_run_config",
     # synthesis (functional API)
     "synthesize_phantom",
-    # roi
+    # roi — general
+    "get_fitting_mask",
+    # roi — dwi / kidney
     "EVALUATION_REGION_NAMES",
     "get_evaluation_segments",
-    "get_fitting_mask",
     # io
     "save_nifti",
     "save_hdf5",

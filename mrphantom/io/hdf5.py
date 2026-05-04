@@ -4,8 +4,8 @@ Schema
 ------
 The HDF5 file written by :func:`save_hdf5` has the following layout::
 
-    /signal          float64  (X, Y, Z, n_bvalues)  — gzip-compressed
-    /bvalues         float64  (n_bvalues,)
+    /signal          float64  (X, Y, Z, n_volumes)  — gzip-compressed
+    /volumes         float64  (n_volumes,)
     /segmentation    int32    (X, Y, Z)              — gzip-compressed
     /affine          float64  (4, 4)
 
@@ -14,6 +14,9 @@ The HDF5 file written by :func:`save_hdf5` has the following layout::
         name         str
         description  str
         snr          float  (absent when noise-free)
+
+``/volumes`` stores the acquisition-parameter axis (e.g. b-values for DWI,
+inversion times for T1, echo times for T2).
 
 :func:`load_hdf5` reads the file back and returns a :class:`PhantomData`
 dataclass that bundles all arrays and metadata.
@@ -28,8 +31,6 @@ import h5py
 import nibabel as nib
 import numpy as np
 
-from ..config import PhantomConfig
-
 
 # ---------------------------------------------------------------------------
 # Return type for load_hdf5
@@ -41,8 +42,9 @@ class PhantomData:
     """All arrays and metadata loaded from a saved phantom HDF5 file.
 
     Attributes:
-        signal:       4-D signal array, shape ``(X, Y, Z, n_bvalues)``.
-        bvalues:      1-D b-value array, shape ``(n_bvalues,)``.
+        signal:       4-D signal array, shape ``(X, Y, Z, n_volumes)``.
+        volumes:      1-D acquisition-parameter array, shape ``(n_volumes,)``.
+                      Stores b-values for DWI, inversion times for T1, etc.
         segmentation: 3-D integer segmentation array, shape ``(X, Y, Z)``.
         affine:       4×4 NIfTI affine matrix.
         case_id:      Case identifier string.
@@ -52,7 +54,7 @@ class PhantomData:
     """
 
     signal: np.ndarray
-    bvalues: np.ndarray
+    volumes: np.ndarray
     segmentation: np.ndarray
     affine: np.ndarray
     case_id: str
@@ -77,28 +79,34 @@ class PhantomData:
 def save_hdf5(
     signal: np.ndarray,
     signal_img: nib.Nifti1Image,
-    config: PhantomConfig,
+    volumes: np.ndarray,
+    segmentation: np.ndarray | Path,
     out_path: Path | str,
+    *,
+    case_id: str = "",
+    name: str = "",
+    description: str = "",
     snr: float | None = None,
     compression: str | None = "gzip",
 ) -> Path:
     """Save a synthesized phantom to an HDF5 file.
 
-    The segmentation is re-loaded from *config.nifti_path* so that the integer
-    label array is always stored alongside the signal — even when the NIfTI
-    image passed in is already the signal (not the segmentation).
-
     Args:
-        signal:      4-D ``float64`` signal array ``(X, Y, Z, n_bvalues)``
-                     from :func:`~mrphantom.synthesis_dwi.synthesize_phantom`.
+        signal:      4-D ``float64`` signal array ``(X, Y, Z, n_volumes)``.
         signal_img:  Corresponding :class:`nibabel.Nifti1Image` (used for the
                      affine matrix).
-        config:      :class:`~mrphantom.config.PhantomConfig` used to synthesize
-                     *signal* (provides metadata and segmentation path).
+        volumes:     1-D acquisition-parameter array ``(n_volumes,)`` — e.g.
+                     b-values for DWI or inversion times for T1.
+        segmentation: Either a 3-D integer ``ndarray`` of segment labels, or a
+                     :class:`~pathlib.Path` to a NIfTI segmentation file that
+                     will be loaded and stored alongside the signal.
         out_path:    Destination file path.  The suffix ``.h5`` is appended
                      automatically if the path does not end in ``.h5`` or
                      ``.hdf5``.
-        snr:         SNR value stored as metadata attribute.  Pass ``None``
+        case_id:     Case identifier stored as a root attribute.
+        name:        Short phantom name stored as a root attribute.
+        description: Human-readable description stored as a root attribute.
+        snr:         SNR value stored as a root attribute.  Pass ``None``
                      for noise-free phantoms.
         compression: HDF5 compression filter for large datasets (default
                      ``"gzip"``).  Pass ``None`` to disable.
@@ -107,11 +115,8 @@ def save_hdf5(
         The resolved :class:`Path` of the written file.
 
     Raises:
-        FileNotFoundError: If *config.nifti_path* does not exist.
+        FileNotFoundError: If *segmentation* is a path and does not exist.
     """
-    if not config.nifti_path.is_file():
-        raise FileNotFoundError(f"Segmentation NIfTI not found: {config.nifti_path}")
-
     out_path = Path(out_path)
     suffixes = "".join(out_path.suffixes).lower()
     if not (suffixes.endswith(".h5") or suffixes.endswith(".hdf5")):
@@ -119,23 +124,29 @@ def save_hdf5(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Load segmentation for storage
-    seg_img: nib.Nifti1Image = nib.load(config.nifti_path)
-    seg_raw = np.round(seg_img.get_fdata()).astype(np.int32)
-    seg_data: np.ndarray = seg_raw[..., 0] if seg_raw.ndim == 4 else seg_raw
+    # Resolve segmentation — accept either an array or a path to a NIfTI file.
+    if isinstance(segmentation, (str, Path)):
+        seg_path = Path(segmentation)
+        if not seg_path.is_file():
+            raise FileNotFoundError(f"Segmentation NIfTI not found: {seg_path}")
+        seg_img: nib.Nifti1Image = nib.load(seg_path)
+        seg_raw = np.round(seg_img.get_fdata()).astype(np.int32)
+        seg_data: np.ndarray = seg_raw[..., 0] if seg_raw.ndim == 4 else seg_raw
+    else:
+        seg_data = np.asarray(segmentation, dtype=np.int32)
 
     with h5py.File(out_path, "w") as f:
         f.create_dataset(
             "signal", data=signal.astype(np.float64), compression=compression
         )
-        f.create_dataset("bvalues", data=config.bvalues.astype(np.float64))
+        f.create_dataset("volumes", data=np.asarray(volumes, dtype=np.float64))
         f.create_dataset("segmentation", data=seg_data, compression=compression)
         f.create_dataset("affine", data=signal_img.affine.astype(np.float64))
 
         # Root-level metadata
-        f.attrs["case_id"] = config.case_id
-        f.attrs["name"] = config.name
-        f.attrs["description"] = config.description
+        f.attrs["case_id"] = case_id
+        f.attrs["name"] = name
+        f.attrs["description"] = description
         if snr is not None:
             f.attrs["snr"] = float(snr)
 
@@ -166,7 +177,7 @@ def load_hdf5(path: Path | str) -> PhantomData:
 
     with h5py.File(path, "r") as f:
         signal: np.ndarray = f["signal"][()]  # type: ignore[index]
-        bvalues: np.ndarray = f["bvalues"][()]  # type: ignore[index]
+        volumes: np.ndarray = f["volumes"][()]  # type: ignore[index]
         segmentation: np.ndarray = f["segmentation"][()]  # type: ignore[index]
         affine: np.ndarray = f["affine"][()]  # type: ignore[index]
 
@@ -177,7 +188,7 @@ def load_hdf5(path: Path | str) -> PhantomData:
 
     return PhantomData(
         signal=signal,
-        bvalues=bvalues,
+        volumes=volumes,
         segmentation=segmentation,
         affine=affine,
         case_id=case_id,

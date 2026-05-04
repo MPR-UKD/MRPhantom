@@ -1,44 +1,15 @@
-"""Region-of-interest selection for phantom evaluation and fitting.
+"""General region-of-interest mask utilities.
 
-Evaluation focus (kidney-only):
-    - **hilum** (index 1)
-    - **cortex** (index 10)
-    - **medulla** (index 11)
+Provides :func:`get_fitting_mask`, a modality-agnostic helper that builds a
+boolean 3-D voxel mask from a list of integer NIfTI segment labels.
 
-All fitters receive a reduced mask covering only the evaluation segments.
-Liver and other non-kidney regions are excluded from both fitting and
-evaluation so that off-target tissue does not influence accuracy metrics.
+For DWI-specific kidney evaluation regions (hilum, cortex, medulla) see
+:mod:`mrphantom.dwi.roi`.
 """
 
 from __future__ import annotations
 
 import numpy as np
-
-from .config import PhantomConfig
-
-# Names of regions selected for quantitative accuracy evaluation.
-EVALUATION_REGION_NAMES: frozenset[str] = frozenset({"hilum", "cortex", "medulla"})
-
-
-def get_evaluation_segments(config: PhantomConfig) -> list[int]:
-    """Return NIfTI label indices of the evaluation focus regions.
-
-    Regions are matched by name (see :data:`EVALUATION_REGION_NAMES`).  This is
-    name-driven rather than index-hardcoded so the function remains correct even
-    if the user provides a phantom JSON with different label numbering.
-
-    Args:
-        config: Loaded :class:`~mrphantom.config.PhantomConfig`.
-
-    Returns:
-        Sorted list of integer segment indices present in *config* whose name
-        appears in :data:`EVALUATION_REGION_NAMES`.
-    """
-    return sorted(
-        region.index
-        for region in config.regions.values()
-        if region.name in EVALUATION_REGION_NAMES
-    )
 
 
 def get_fitting_mask(

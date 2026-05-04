@@ -12,7 +12,7 @@ Synthesize a single case with SNR=30, write both NIfTI and HDF5::
         --out phantom.nii.gz --out phantom.h5
 
 Batch synthesis from a TOML run-config::
-
+    
     mrphantom run experiment.toml
 
 Print phantom metadata::
@@ -30,8 +30,8 @@ from pathlib import Path
 
 import click
 
-from .config import load_phantom_config
-from .dwi import DWIPhantom
+from .dwi.config import load_dwi_config
+from .dwi.phantom import DWIPhantom
 from .io import load_hdf5
 from .run_config import load_run_config
 
@@ -103,7 +103,7 @@ def synth(
     export to several formats simultaneously.
     """
     click.echo(f"Loading config: {config_json}")
-    config = load_phantom_config(config_json, bval_file)
+    config = load_dwi_config(config_json, bval_file)
     click.echo(
         f"  case_id={config.case_id!r}  regions={len(config.regions)}"
         f"  b-values={len(config.bvalues)}"
@@ -170,7 +170,7 @@ def run(toml_file: Path) -> None:
 
     for i, entry in enumerate(run_cfg.cases, start=1):
         click.echo(f"\n[{i}/{len(run_cfg.cases)}] {entry.config.name}")
-        config = load_phantom_config(entry.config, entry.bvals)
+        config = load_dwi_config(entry.config, entry.bvals)
         click.echo(
             f"  case_id={config.case_id!r}"
             f"  regions={len(config.regions)}"
@@ -211,7 +211,7 @@ def info(config_json: Path, bval_file: Path) -> None:
 
     CONFIG is a phantom JSON file.  BVAL is the matching b-values file.
     """
-    config = load_phantom_config(config_json, bval_file)
+    config = load_dwi_config(config_json, bval_file)
 
     click.echo(f"case_id     : {config.case_id}")
     click.echo(f"name        : {config.name}")
@@ -245,7 +245,7 @@ def inspect(hdf5_file: Path) -> None:
     click.echo(f"description : {data.description}")
     click.echo(f"snr         : {data.snr}")
     click.echo(f"signal      : shape={data.signal.shape}  dtype={data.signal.dtype}")
-    click.echo(f"bvalues     : {data.bvalues.tolist()}")
+    click.echo(f"volumes     : {data.volumes.tolist()}")
     click.echo(
         f"segmentation: shape={data.segmentation.shape}  dtype={data.segmentation.dtype}"
     )
