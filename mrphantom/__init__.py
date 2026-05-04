@@ -8,6 +8,7 @@ Full documentation lives in the ``docs/`` directory:
 - ``docs/usage.md``            — usage guide and examples
 - ``docs/case_structure.md``   — case directory layout and JSON schema
 - ``docs/toml_run_config.md``  — TOML run-config format
+- ``docs/reference.md``        — signal model formulation and HDF5 file schema
 """
 
 from .base import MRPhantom
