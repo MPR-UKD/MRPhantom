@@ -18,8 +18,9 @@ mrphantom="mrphantom.cli:main"
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 
-[tool.setuptools.packages.find]
-include = ["mrphantom*"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
