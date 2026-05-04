@@ -42,28 +42,25 @@ import numpy as np
 from .base import MRPhantom
 from .config import PhantomConfig, load_phantom_config
 from .io import save_hdf5, save_nifti
-from .synthesis import synthesize_phantom
+from .synthesis_dwi import synthesize_phantom
 
 
 class DWIPhantom(MRPhantom):
     """Diffusion-weighted MR phantom synthesizer.
 
-    Parameters
-    ----------
-    snr:
-        Signal-to-noise ratio for Rician noise.  ``None`` (default) produces
-        a noise-free phantom.
-    seed:
-        Integer random seed for reproducible noise.  Ignored when *snr* is
-        ``None``.
+    Attributes:
+        snr: Signal-to-noise ratio for Rician noise. ``None`` (default)
+            produces a noise-free phantom.
+        seed: Integer random seed for reproducible noise. Ignored when ``snr``
+            is ``None``.
 
-    Examples
-    --------
-    >>> phantom = DWIPhantom(snr=30, seed=42)
-    >>> phantom.load_case(config).synthesize().save("out.nii.gz")
+    Examples:
+        >>> phantom = DWIPhantom(snr=30, seed=42)
+        >>> phantom.load_case(config).synthesize().save("out.nii.gz")
     """
 
     def __init__(self, *, snr: float | None = None, seed: int | None = None) -> None:
+        """Initialise with acquisition parameters only; no case data loaded yet."""
         super().__init__(snr=snr, seed=seed)
         self._config: PhantomConfig | None = None
         self._signal: np.ndarray | None = None
@@ -90,21 +87,14 @@ class DWIPhantom(MRPhantom):
                 load_phantom_config(json_path, bval_path)
             )
 
-        Parameters
-        ----------
-        json_path:
-            Path to the phantom JSON file.
-        bval_path:
-            Path to the b-values text file.
-        snr:
-            Signal-to-noise ratio.  ``None`` for noise-free.
-        seed:
-            Random seed for reproducible noise.
+        Args:
+            json_path: Path to the phantom JSON file.
+            bval_path: Path to the b-values text file.
+            snr: Signal-to-noise ratio. ``None`` for noise-free.
+            seed: Random seed for reproducible noise.
 
-        Returns
-        -------
-        DWIPhantom
-            Instance with the case already loaded, ready to call
+        Returns:
+            DWIPhantom: Instance with the case already loaded, ready to call
             :meth:`synthesize`.
         """
         config = load_phantom_config(Path(json_path), Path(bval_path))
@@ -120,16 +110,13 @@ class DWIPhantom(MRPhantom):
         Clears any previously synthesized signal so that stale results are
         never accessible after a case is swapped.
 
-        Parameters
-        ----------
-        config:
-            Fully loaded :class:`~mrphantom.config.PhantomConfig` (use
-            :func:`~mrphantom.config.load_phantom_config` to create one).
+        Args:
+            config: Fully loaded :class:`~mrphantom.config.PhantomConfig` (use
+                :func:`~mrphantom.config.load_phantom_config` to create one).
 
-        Returns
-        -------
-        self
-            Enables chaining: ``phantom.load_case(cfg).synthesize()``.
+        Returns:
+            DWIPhantom: self, enables chaining:
+            ``phantom.load_case(cfg).synthesize()``.
         """
         self._config = config
         self._signal = None
@@ -140,18 +127,15 @@ class DWIPhantom(MRPhantom):
         """Synthesize the DWI signal from the loaded case.
 
         Evaluates the multi-exponential model for every segmented region and
-        optionally adds Rician noise.  Results are cached on the instance and
+        optionally adds Rician noise. Results are cached on the instance and
         exposed via :attr:`signal` and :attr:`signal_img`.
 
-        Returns
-        -------
-        self
-            Enables chaining: ``phantom.synthesize().save("out.nii.gz")``.
+        Returns:
+            DWIPhantom: self, enables chaining:
+            ``phantom.synthesize().save("out.nii.gz")``.
 
-        Raises
-        ------
-        RuntimeError
-            If :meth:`load_case` has not been called first.
+        Raises:
+            RuntimeError: If :meth:`load_case` has not been called first.
         """
         if self._config is None:
             raise RuntimeError(
@@ -180,23 +164,17 @@ class DWIPhantom(MRPhantom):
         - ``.nii`` / ``.nii.gz`` → NIfTI
         - ``.h5`` / ``.hdf5``    → HDF5
 
-        Parameters
-        ----------
-        *paths:
-            One or more output file paths.  At least one must be provided.
+        Args:
+            *paths: One or more output file paths. At least one must be
+                provided.
 
-        Returns
-        -------
-        list[Path]
-            Resolved paths of every file that was written.
+        Returns:
+            list[Path]: Resolved paths of every file that was written.
 
-        Raises
-        ------
-        RuntimeError
-            If :meth:`synthesize` has not been called first.
-        ValueError
-            If no output paths are provided, or if an extension is not
-            recognised.
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called first.
+            ValueError: If no output paths are provided, or if an extension
+                is not recognised.
         """
         if self._signal is None or self._signal_img is None:
             raise RuntimeError(
@@ -241,10 +219,8 @@ class DWIPhantom(MRPhantom):
     def config(self) -> PhantomConfig:
         """The loaded :class:`~mrphantom.config.PhantomConfig`.
 
-        Raises
-        ------
-        RuntimeError
-            If :meth:`load_case` has not been called.
+        Raises:
+            RuntimeError: If :meth:`load_case` has not been called.
         """
         if self._config is None:
             raise RuntimeError(
@@ -256,10 +232,8 @@ class DWIPhantom(MRPhantom):
     def signal(self) -> np.ndarray:
         """Synthesized 4-D signal array, shape ``(X, Y, Z, n_bvalues)``.
 
-        Raises
-        ------
-        RuntimeError
-            If :meth:`synthesize` has not been called.
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
         """
         if self._signal is None:
             raise RuntimeError(
@@ -271,10 +245,8 @@ class DWIPhantom(MRPhantom):
     def signal_img(self) -> nib.Nifti1Image:
         """Synthesized signal as a :class:`nibabel.Nifti1Image`.
 
-        Raises
-        ------
-        RuntimeError
-            If :meth:`synthesize` has not been called.
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
         """
         if self._signal_img is None:
             raise RuntimeError(

@@ -77,12 +77,9 @@ else:
 class CaseEntry:
     """A single case to synthesize.
 
-    Attributes
-    ----------
-    config:
-        Absolute path to the phantom JSON file.
-    bvals:
-        Absolute path to the b-values text file.
+    Attributes:
+        config: Absolute path to the phantom JSON file.
+        bvals: Absolute path to the b-values text file.
     """
 
     config: Path
@@ -93,15 +90,13 @@ class CaseEntry:
 class ExportConfig:
     """Export settings shared across all cases in a run.
 
-    Attributes
-    ----------
-    output_dir:
-        Directory where synthesized files are written.
-    filename_template:
-        File stem template.  ``{case_id}`` is replaced with the case's
-        ``case_id`` field at synthesis time.  Example: ``"{case_id}_snr30"``.
-    formats:
-        List of output formats.  Supported values: ``"nifti"``, ``"hdf5"``.
+    Attributes:
+        output_dir: Directory where synthesized files are written.
+        filename_template: File stem template. ``{case_id}`` is replaced with
+            the case's ``case_id`` field at synthesis time.
+            Example: ``"{case_id}_snr30"``.
+        formats: List of output formats. Supported values: ``"nifti"``,
+            ``"hdf5"``.
     """
 
     output_dir: Path
@@ -111,22 +106,18 @@ class ExportConfig:
     def resolve_paths(self, case_id: str) -> list[Path]:
         """Build output file paths for a given *case_id*.
 
-        Parameters
-        ----------
-        case_id:
-            The ``case_id`` string from the phantom JSON (used for
-            ``{case_id}`` interpolation in :attr:`filename_template`).
+        Args:
+            case_id: The ``case_id`` string from the phantom JSON (used for
+                ``{case_id}`` interpolation in :attr:`filename_template`).
 
-        Returns
-        -------
-        list[Path]
-            One path per entry in :attr:`formats`, with appropriate
-            file extensions (``.nii.gz`` for NIfTI, ``.h5`` for HDF5).
+        Returns:
+            list[Path]: One path per entry in :attr:`formats`, with
+            appropriate file extensions (``.nii.gz`` for NIfTI, ``.h5`` for
+            HDF5).
 
-        Raises
-        ------
-        ValueError
-            If an entry in :attr:`formats` is not ``"nifti"`` or ``"hdf5"``.
+        Raises:
+            ValueError: If an entry in :attr:`formats` is not ``"nifti"`` or
+                ``"hdf5"``.
         """
         stem = self.filename_template.format(case_id=case_id)
         paths: list[Path] = []
@@ -147,18 +138,13 @@ class ExportConfig:
 class RunConfig:
     """Top-level configuration for a batch synthesis run.
 
-    Attributes
-    ----------
-    snr:
-        Signal-to-noise ratio passed to the phantom synthesizer.  ``None``
-        produces noise-free output.
-    seed:
-        Random seed for reproducible Rician noise.  Ignored when *snr* is
-        ``None``.
-    export:
-        Export settings (output directory, filename template, formats).
-    cases:
-        Ordered list of cases to synthesize.
+    Attributes:
+        snr: Signal-to-noise ratio passed to the phantom synthesizer. ``None``
+            produces noise-free output.
+        seed: Random seed for reproducible Rician noise. Ignored when ``snr``
+            is ``None``.
+        export: Export settings (output directory, filename template, formats).
+        cases: Ordered list of cases to synthesize.
     """
 
     snr: float | None
@@ -178,23 +164,17 @@ def load_run_config(toml_path: Path | str) -> RunConfig:
     All relative paths inside the TOML are resolved against the directory
     that contains the TOML file, so the file can live anywhere in the project.
 
-    Parameters
-    ----------
-    toml_path:
-        Path to the ``.toml`` run-config file.
+    Args:
+        toml_path: Path to the ``.toml`` run-config file.
 
-    Returns
-    -------
-    RunConfig
+    Returns:
+        RunConfig: Fully resolved :class:`RunConfig` with absolute case paths.
 
-    Raises
-    ------
-    FileNotFoundError
-        If *toml_path* does not exist.
-    KeyError
-        If required TOML keys are missing.
-    ValueError
-        If ``[[cases]]`` is empty or an unsupported export format is listed.
+    Raises:
+        FileNotFoundError: If *toml_path* does not exist.
+        KeyError: If required TOML keys are missing.
+        ValueError: If ``[[cases]]`` is empty or an unsupported export format
+            is listed.
     """
     toml_path = Path(toml_path)
     if not toml_path.is_file():

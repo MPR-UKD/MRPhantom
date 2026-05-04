@@ -23,7 +23,7 @@ def save_nifti(signal_img: nib.Nifti1Image, out_path: Path | str) -> Path:
 
     Args:
         signal_img: The :class:`nibabel.Nifti1Image` to save (e.g. from
-            :func:`~mrphantom.synthesis.synthesize_phantom`).
+            :func:`~mrphantom.synthesis_dwi.synthesize_phantom`).
         out_path:   Destination file path.  If the path does not end in
             ``.nii`` or ``.nii.gz``, the suffix ``.nii.gz`` is appended
             automatically.

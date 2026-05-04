@@ -25,17 +25,15 @@ from abc import ABC, abstractmethod
 class MRPhantom(ABC):
     """Abstract base class for MR phantom synthesizers.
 
-    Parameters
-    ----------
-    snr:
-        Signal-to-noise ratio for Rician noise simulation.  Pass ``None``
-        (default) for a noise-free phantom.
-    seed:
-        Integer random seed for reproducible noise.  Ignored when *snr* is
-        ``None``.
+    Attributes:
+        snr: Signal-to-noise ratio for Rician noise simulation. ``None``
+            (default) for a noise-free phantom.
+        seed: Integer random seed for reproducible noise. Ignored when ``snr``
+            is ``None``.
     """
 
     def __init__(self, *, snr: float | None = None, seed: int | None = None) -> None:
+        """Initialise with acquisition parameters only."""
         self.snr = snr
         self.seed = seed
 
@@ -47,29 +45,25 @@ class MRPhantom(ABC):
     def load_case(self, config) -> "MRPhantom":
         """Attach case data (segmentation + diffusion parameters).
 
-        Parameters
-        ----------
-        config:
-            A case configuration object understood by the concrete subclass
-            (e.g. :class:`~mrphantom.config.PhantomConfig`).
+        Args:
+            config: A case configuration object understood by the concrete
+                subclass (e.g. :class:`~mrphantom.config.PhantomConfig`).
 
-        Returns
-        -------
-        self
-            Allows chaining: ``phantom.load_case(config).synthesize()``.
+        Returns:
+            MRPhantom: self, allows chaining:
+            ``phantom.load_case(config).synthesize()``.
         """
 
     @abstractmethod
     def synthesize(self) -> "MRPhantom":
         """Run the signal synthesis model.
 
-        Must be called after :meth:`load_case`.  Results are stored on the
+        Must be called after :meth:`load_case`. Results are stored on the
         instance and accessible via the concrete class's read-only properties.
 
-        Returns
-        -------
-        self
-            Allows chaining: ``phantom.load_case(config).synthesize().save(...)``.
+        Returns:
+            MRPhantom: self, allows chaining:
+            ``phantom.load_case(config).synthesize().save(...)``.
         """
 
     # ------------------------------------------------------------------
@@ -79,40 +73,31 @@ class MRPhantom(ABC):
     def get_params(self) -> dict:
         """Return constructor parameters as a dictionary.
 
-        Returns
-        -------
-        dict
-            ``{"snr": ..., "seed": ...}`` (and any additional parameters
+        Returns:
+            dict: ``{"snr": ..., "seed": ...}`` (and any additional parameters
             defined by concrete subclasses).
 
-        Examples
-        --------
-        >>> phantom.get_params()
-        {'snr': 30.0, 'seed': 42}
+        Examples:
+            >>> phantom.get_params()
+            {'snr': 30.0, 'seed': 42}
         """
         return {"snr": self.snr, "seed": self.seed}
 
     def set_params(self, **params) -> "MRPhantom":
         """Set one or more parameters and return ``self``.
 
-        Parameters
-        ----------
-        **params:
-            Keyword arguments matching constructor parameter names.
+        Args:
+            **params: Keyword arguments matching constructor parameter names.
 
-        Returns
-        -------
-        self
-            Allows chaining: ``phantom.set_params(snr=50).load_case(config)``.
+        Returns:
+            MRPhantom: self, allows chaining:
+            ``phantom.set_params(snr=50).load_case(config)``.
 
-        Raises
-        ------
-        ValueError
-            If an unknown parameter name is passed.
+        Raises:
+            ValueError: If an unknown parameter name is passed.
 
-        Examples
-        --------
-        >>> phantom.set_params(snr=50, seed=0)
+        Examples:
+            >>> phantom.set_params(snr=50, seed=0)
         """
         valid = set(self.get_params())
         for key, value in params.items():

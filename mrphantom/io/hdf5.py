@@ -90,7 +90,7 @@ def save_hdf5(
 
     Args:
         signal:      4-D ``float64`` signal array ``(X, Y, Z, n_bvalues)``
-                     from :func:`~mrphantom.synthesis.synthesize_phantom`.
+                     from :func:`~mrphantom.synthesis_dwi.synthesize_phantom`.
         signal_img:  Corresponding :class:`nibabel.Nifti1Image` (used for the
                      affine matrix).
         config:      :class:`~mrphantom.config.PhantomConfig` used to synthesize
