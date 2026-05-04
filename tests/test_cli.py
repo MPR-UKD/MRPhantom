@@ -138,10 +138,13 @@ def test_run_command(runner, assets_dir, tmp_path):
     # Use the real kidney run.toml — but point output to tmp_path
     import shutil
 
-    # Copy the TOML to tmp_path and patch the output_dir to tmp_path
+    # Copy the TOML to tmp_path and patch the output_dir to tmp_path.
+    # Use POSIX (forward-slash) paths so they are valid inside TOML strings on
+    # all platforms (backslashes are escape characters in TOML).
     toml_content = (assets_dir / "kidney" / "run.toml").read_text()
     patched = toml_content.replace(
-        'output_dir        = "output/"', f'output_dir = "{tmp_path}/"'
+        'output_dir        = "output/"',
+        f'output_dir = "{tmp_path.as_posix()}/"',
     )
     patched_toml = tmp_path / "run.toml"
     patched_toml.write_text(patched)
@@ -154,10 +157,10 @@ def test_run_command(runner, assets_dir, tmp_path):
     patched2 = patched_toml.read_text()
     patched2 = patched2.replace(
         'config = "case_001/kid_001_cor_ang.json"',
-        f'config = "{json_abs}"',
+        f'config = "{json_abs.as_posix()}"',
     ).replace(
         'bvals  = "case_001/bvals.txt"',
-        f'bvals  = "{bval_abs}"',
+        f'bvals  = "{bval_abs.as_posix()}"',
     )
     patched_toml.write_text(patched2)
 
