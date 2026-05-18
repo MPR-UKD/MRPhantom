@@ -13,7 +13,8 @@ The HDF5 file written by :func:`save_hdf5` has the following layout::
         case_id      str
         name         str
         description  str
-        snr          float  (absent when noise-free)
+        snr          float   (absent when noise-free)
+        snr_region   str     (absent when using max(S0) as reference)
 
 ``/volumes`` stores the acquisition-parameter axis (e.g. b-values for DWI,
 inversion times for T1, echo times for T2).
@@ -51,6 +52,8 @@ class PhantomData:
         name:         Short phantom name.
         description:  Human-readable description.
         snr:          SNR used during synthesis, or ``None`` if noise-free.
+        snr_region:   Name of the region whose S0 was used as the SNR noise
+                      reference, or ``None`` if ``max(S0)`` was used.
     """
 
     signal: np.ndarray
@@ -61,6 +64,7 @@ class PhantomData:
     name: str
     description: str
     snr: float | None
+    snr_region: str | None = None
 
     def as_nifti(self) -> nib.Nifti1Image:
         """Reconstruct a :class:`nibabel.Nifti1Image` from the stored arrays.
@@ -87,6 +91,7 @@ def save_hdf5(
     name: str = "",
     description: str = "",
     snr: float | None = None,
+    snr_region: str | None = None,
     compression: str | None = "gzip",
 ) -> Path:
     """Save a synthesized phantom to an HDF5 file.
@@ -108,6 +113,9 @@ def save_hdf5(
         description: Human-readable description stored as a root attribute.
         snr:         SNR value stored as a root attribute.  Pass ``None``
                      for noise-free phantoms.
+        snr_region:  Name of the region whose S0 was used as the noise
+                     reference.  Pass ``None`` when ``max(S0)`` was used.
+                     Stored as a root attribute only when not ``None``.
         compression: HDF5 compression filter for large datasets (default
                      ``"gzip"``).  Pass ``None`` to disable.
 
@@ -149,6 +157,8 @@ def save_hdf5(
         f.attrs["description"] = description
         if snr is not None:
             f.attrs["snr"] = float(snr)
+        if snr_region is not None:
+            f.attrs["snr_region"] = snr_region
 
     return out_path
 
@@ -185,6 +195,9 @@ def load_hdf5(path: Path | str) -> PhantomData:
         name: str = str(f.attrs["name"])
         description: str = str(f.attrs["description"])
         snr: float | None = float(f.attrs["snr"]) if "snr" in f.attrs else None
+        snr_region: str | None = (
+            str(f.attrs["snr_region"]) if "snr_region" in f.attrs else None
+        )
 
     return PhantomData(
         signal=signal,
@@ -195,4 +208,5 @@ def load_hdf5(path: Path | str) -> PhantomData:
         name=name,
         description=description,
         snr=snr,
+        snr_region=snr_region,
     )

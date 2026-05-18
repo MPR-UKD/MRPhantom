@@ -53,15 +53,29 @@ class DWIPhantom(MRPhantom):
             produces a noise-free phantom.
         seed: Integer random seed for reproducible noise. Ignored when ``snr``
             is ``None``.
+        snr_region: Name of the region whose S0 is used as the noise reference
+            when computing σ.  ``None`` (default) uses ``max(S0)`` across all
+            regions.  Ignored when ``snr`` is ``None``.
 
     Examples:
         >>> phantom = DWIPhantom(snr=30, seed=42)
         >>> phantom.load_case(config).synthesize().save("out.nii.gz")
+
+        >>> # Use cortex S0 as the SNR reference instead of max(S0)
+        >>> phantom = DWIPhantom(snr=30, snr_region="cortex", seed=42)
+        >>> phantom.load_case(config).synthesize().save("out.nii.gz")
     """
 
-    def __init__(self, *, snr: float | None = None, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        snr: float | None = None,
+        seed: int | None = None,
+        snr_region: str | None = None,
+    ) -> None:
         """Initialise with acquisition parameters only; no case data loaded yet."""
         super().__init__(snr=snr, seed=seed)
+        self.snr_region = snr_region
         self._config: DWIConfig | None = None
         self._signal: np.ndarray | None = None
         self._signal_img: nib.Nifti1Image | None = None
@@ -78,27 +92,30 @@ class DWIPhantom(MRPhantom):
         *,
         snr: float | None = None,
         seed: int | None = None,
+        snr_region: str | None = None,
     ) -> "DWIPhantom":
         """Create a :class:`DWIPhantom` and load a case in one step.
 
         Equivalent to::
 
-            DWIPhantom(snr=snr, seed=seed).load_case(
+            DWIPhantom(snr=snr, seed=seed, snr_region=snr_region).load_case(
                 load_dwi_config(json_path, bval_path)
             )
 
         Args:
-            json_path: Path to the phantom JSON file.
-            bval_path: Path to the b-values text file.
-            snr: Signal-to-noise ratio. ``None`` for noise-free.
-            seed: Random seed for reproducible noise.
+            json_path:  Path to the phantom JSON file.
+            bval_path:  Path to the b-values text file.
+            snr:        Signal-to-noise ratio. ``None`` for noise-free.
+            seed:       Random seed for reproducible noise.
+            snr_region: Name of the region whose S0 is used as the noise
+                        reference.  ``None`` uses ``max(S0)``.
 
         Returns:
             DWIPhantom: Instance with the case already loaded, ready to call
             :meth:`synthesize`.
         """
         config = load_dwi_config(Path(json_path), Path(bval_path))
-        return cls(snr=snr, seed=seed).load_case(config)
+        return cls(snr=snr, seed=seed, snr_region=snr_region).load_case(config)
 
     # ------------------------------------------------------------------
     # MRPhantom interface
@@ -148,9 +165,29 @@ class DWIPhantom(MRPhantom):
             rng = np.random.default_rng(self.seed)
 
         self._signal, self._signal_img = synthesize_phantom(
-            self._config, snr=self.snr, rng=rng
+            self._config, snr=self.snr, rng=rng, snr_region=self.snr_region
         )
         return self
+
+    # ------------------------------------------------------------------
+    # Introspection — extend base with snr_region
+    # ------------------------------------------------------------------
+
+    def get_params(self) -> dict:
+        """Return constructor parameters as a dictionary.
+
+        Extends the base-class implementation to include :attr:`snr_region`.
+
+        Returns:
+            dict: ``{"snr": ..., "seed": ..., "snr_region": ...}``.
+
+        Examples:
+            >>> DWIPhantom(snr=30, seed=42, snr_region="cortex").get_params()
+            {'snr': 30, 'seed': 42, 'snr_region': 'cortex'}
+        """
+        params = super().get_params()
+        params["snr_region"] = self.snr_region
+        return params
 
     # ------------------------------------------------------------------
     # Export
@@ -205,6 +242,7 @@ class DWIPhantom(MRPhantom):
                         name=self._config.name,
                         description=self._config.description,
                         snr=self.snr,
+                        snr_region=self.snr_region,
                     )
                 )
             else:

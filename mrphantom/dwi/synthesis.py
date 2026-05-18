@@ -20,6 +20,7 @@ def synthesize_phantom(
     config: DWIConfig,
     snr: float | None = None,
     rng: np.random.Generator | None = None,
+    snr_region: str | None = None,
 ) -> tuple[np.ndarray, nib.Nifti1Image]:
     """Synthesize a 4-D DWI phantom from ground-truth diffusion parameters.
 
@@ -34,13 +35,22 @@ def synthesize_phantom(
 
         S_noisy = sqrt( (S + N_re)² + N_im² )
 
-    where ``N_re, N_im ~ Normal(0, σ)`` and ``σ = max(S0) / snr``.
+    where ``N_re, N_im ~ Normal(0, σ)``.  The noise standard deviation σ is
+    determined by the *snr_region* argument:
+
+    - If *snr_region* is a region name (e.g. ``"cortex"``):
+      ``σ = S0_of_that_region / snr``.
+    - If *snr_region* is ``None`` (default): ``σ = max(S0) / snr``.
 
     Args:
-        config: Fully loaded :class:`~mrphantom.dwi.config.DWIConfig`.
-        snr:    Signal-to-noise ratio.  Pass ``None`` to skip noise entirely.
-        rng:    Optional seeded :class:`numpy.random.Generator` for
-                reproducibility.  A new generator is created if ``None``.
+        config:     Fully loaded :class:`~mrphantom.dwi.config.DWIConfig`.
+        snr:        Signal-to-noise ratio.  Pass ``None`` to skip noise entirely.
+        rng:        Optional seeded :class:`numpy.random.Generator` for
+                    reproducibility.  A new generator is created if ``None``.
+        snr_region: Name of the region whose S0 is used as the noise reference.
+                    Must match a :attr:`~mrphantom.dwi.config.RegionConfig.name`
+                    in *config*.  Pass ``None`` to fall back to ``max(S0)``
+                    across all regions.
 
     Returns:
         Tuple of:
@@ -52,6 +62,8 @@ def synthesize_phantom(
 
     Raises:
         FileNotFoundError: If the NIfTI segmentation file does not exist.
+        ValueError: If *snr_region* is given but does not match any region name
+            in *config*.
     """
     if not config.nifti_path.is_file():
         raise FileNotFoundError(f"Segmentation NIfTI not found: {config.nifti_path}")
@@ -82,8 +94,20 @@ def synthesize_phantom(
     if snr is not None:
         if rng is None:
             rng = np.random.default_rng()
-        max_s0 = max(r.S0 for r in config.regions.values())
-        sigma = max_s0 / snr
+        if snr_region is not None:
+            matched = next(
+                (r for r in config.regions.values() if r.name == snr_region), None
+            )
+            if matched is None:
+                valid_names = sorted(r.name for r in config.regions.values())
+                raise ValueError(
+                    f"snr_region {snr_region!r} not found in config. "
+                    f"Valid region names: {valid_names}."
+                )
+            ref_s0 = matched.S0
+        else:
+            ref_s0 = max(r.S0 for r in config.regions.values())
+        sigma = ref_s0 / snr
         noise_real = rng.normal(0.0, sigma, signal.shape)
         noise_imag = rng.normal(0.0, sigma, signal.shape)
         signal = np.sqrt((signal + noise_real) ** 2 + noise_imag**2)
