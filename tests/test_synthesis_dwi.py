@@ -122,3 +122,75 @@ def test_synthesize_missing_nifti_raises(mini_config, tmp_path):
     )
     with pytest.raises(FileNotFoundError):
         synthesize_phantom(bad_config)
+
+
+# ---------------------------------------------------------------------------
+# snr_region — named reference region for noise sigma
+# ---------------------------------------------------------------------------
+
+
+def test_snr_region_uses_named_region_s0(mini_config):
+    """sigma must be S0_of_named_region / snr, not max(S0) / snr.
+
+    mini_config has region_a (S0=100) and region_b (S0=80).
+    With snr_region="region_b" the sigma is 80/snr, not 100/snr.
+    We verify this by checking the variance of the added noise against both
+    candidates; only the region_b-based sigma should fit.
+    """
+    snr = 10.0
+    rng = np.random.default_rng(0)
+    signal_noisy, _ = synthesize_phantom(
+        mini_config, snr=snr, rng=rng, snr_region="region_b"
+    )
+    signal_clean, _ = synthesize_phantom(mini_config)
+    noise = signal_noisy - signal_clean
+
+    # sigma from region_b S0 (80)
+    expected_sigma_b = 80.0 / snr
+    # sigma from max S0 (region_a = 100)
+    expected_sigma_max = 100.0 / snr
+
+    # variance of Rician noise ≈ 2 * sigma^2 for large arrays
+    empirical_var = float(np.var(noise))
+    # The empirical variance should be closer to 2*sigma_b^2 than 2*sigma_max^2
+    err_b = abs(empirical_var - 2 * expected_sigma_b**2)
+    err_max = abs(empirical_var - 2 * expected_sigma_max**2)
+    assert err_b < err_max
+
+
+def test_snr_region_none_falls_back_to_max_s0(mini_config):
+    """With snr_region=None the noise reference should be max(S0)=100.
+
+    We verify that the result is identical to not passing snr_region at all.
+    """
+    rng1 = np.random.default_rng(7)
+    rng2 = np.random.default_rng(7)
+    s_default, _ = synthesize_phantom(mini_config, snr=20, rng=rng1)
+    s_explicit_none, _ = synthesize_phantom(
+        mini_config, snr=20, rng=rng2, snr_region=None
+    )
+    np.testing.assert_array_equal(s_default, s_explicit_none)
+
+
+def test_snr_region_unknown_name_raises(mini_config):
+    """Requesting a non-existent region name must raise ValueError."""
+    with pytest.raises(ValueError, match="snr_region"):
+        synthesize_phantom(
+            mini_config, snr=20, rng=np.random.default_rng(0), snr_region="no_such_region"
+        )
+
+
+def test_snr_region_lower_s0_produces_less_noise(mini_config):
+    """Using region_b (S0=80) as reference gives lower sigma than max(S0)=100,
+    so the noisy signal should be closer to the clean signal on average."""
+    rng_a = np.random.default_rng(99)
+    rng_b = np.random.default_rng(99)
+    snr = 5.0
+    clean, _ = synthesize_phantom(mini_config)
+    noisy_max, _ = synthesize_phantom(mini_config, snr=snr, rng=rng_a)
+    noisy_b, _ = synthesize_phantom(
+        mini_config, snr=snr, rng=rng_b, snr_region="region_b"
+    )
+    rmse_max = float(np.sqrt(np.mean((noisy_max - clean) ** 2)))
+    rmse_b = float(np.sqrt(np.mean((noisy_b - clean) ** 2)))
+    assert rmse_b < rmse_max

@@ -183,3 +183,48 @@ def test_save_hdf5_missing_segmentation_raises(synthesized, tmp_path):
             tmp_path / "out.h5",
             case_id=config.case_id,
         )
+
+
+# ---------------------------------------------------------------------------
+# snr_region — HDF5 round-trip
+# ---------------------------------------------------------------------------
+
+
+def test_save_hdf5_stores_snr_region(synthesized, tmp_path):
+    """snr_region attribute should be written to the HDF5 root group."""
+    signal, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+        snr=20.0, snr_region="region_a",
+    )
+    data = load_hdf5(out)
+    assert data.snr_region == "region_a"
+
+
+def test_save_hdf5_snr_region_none_not_stored(synthesized, tmp_path):
+    """When snr_region is None the attribute should be absent, loading to None."""
+    signal, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+        snr_region=None,
+    )
+    data = load_hdf5(out)
+    assert data.snr_region is None
+
+
+def test_snr_region_roundtrip(synthesized, tmp_path):
+    """Full save/load round-trip preserves both snr and snr_region."""
+    signal, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, name=config.name, description=config.description,
+        snr=30.0, snr_region="region_b",
+    )
+    data = load_hdf5(out)
+    assert data.snr == pytest.approx(30.0)
+    assert data.snr_region == "region_b"

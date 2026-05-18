@@ -183,7 +183,7 @@ def test_save_unknown_extension_raises(mini_config, tmp_path):
 
 def test_get_params(mini_config):
     p = DWIPhantom(snr=30.0, seed=5)
-    assert p.get_params() == {"snr": 30.0, "seed": 5}
+    assert p.get_params() == {"snr": 30.0, "seed": 5, "snr_region": None}
 
 
 def test_set_params_returns_self():
@@ -219,3 +219,57 @@ def test_batch_reuse(mini_config):
     # All three runs should be identical (same config + same seed)
     np.testing.assert_array_equal(results[0], results[1])
     np.testing.assert_array_equal(results[1], results[2])
+
+
+# ---------------------------------------------------------------------------
+# snr_region — DWIPhantom integration
+# ---------------------------------------------------------------------------
+
+
+def test_dwiphantom_snr_region_stored():
+    p = DWIPhantom(snr=20.0, snr_region="cortex")
+    assert p.snr_region == "cortex"
+
+
+def test_dwiphantom_snr_region_default_none():
+    p = DWIPhantom(snr=20.0)
+    assert p.snr_region is None
+
+
+def test_get_params_includes_snr_region():
+    p = DWIPhantom(snr=30.0, seed=5, snr_region="medulla")
+    params = p.get_params()
+    assert "snr_region" in params
+    assert params["snr_region"] == "medulla"
+
+
+def test_get_params_snr_region_none_by_default():
+    p = DWIPhantom(snr=30.0, seed=5)
+    assert p.get_params()["snr_region"] is None
+
+
+def test_set_params_snr_region():
+    p = DWIPhantom()
+    p.set_params(snr_region="region_a")
+    assert p.snr_region == "region_a"
+
+
+def test_from_json_passes_snr_region(json_path, bval_path):
+    p = DWIPhantom.from_json(json_path, bval_path, snr=20.0, snr_region="cortex")
+    assert p.snr_region == "cortex"
+
+
+def test_synthesize_with_snr_region(mini_config):
+    """DWIPhantom with snr_region should produce a valid signal array."""
+    p = DWIPhantom(snr=20.0, seed=0, snr_region="region_a")
+    p.load_case(mini_config).synthesize()
+    assert p.signal.shape == (4, 4, 4, 3)
+    assert (p.signal >= 0).all()
+
+
+def test_synthesize_invalid_snr_region_raises(mini_config):
+    """DWIPhantom should propagate ValueError for unknown snr_region."""
+    p = DWIPhantom(snr=20.0, seed=0, snr_region="no_such_region")
+    p.load_case(mini_config)
+    with pytest.raises(ValueError, match="snr_region"):
+        p.synthesize()
