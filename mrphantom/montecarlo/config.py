@@ -18,14 +18,14 @@ TOML schema
 
     [[montecarlo.regions]]
     name       = "cortex"
-    S0         = {dist = "normal",    mean = 180.0, std  = 10.0}
-    D          = [{dist = "lognormal", mean = 0.003, sigma = 0.10},
-                  {dist = "lognormal", mean = 0.001, sigma = 0.05}]
-    fractions  = {dist = "dirichlet", alpha = [2.0, 1.0]}
+    S0         = {dist = "normal",    std  = 10.0}
+    D          = [{dist = "lognormal", sigma = 0.10},
+                  {dist = "lognormal", sigma = 0.05}]
+    fractions  = {dist = "dirichlet", kappa = 10.0}
 
     [[montecarlo.regions]]
     name = "medulla"
-    S0   = {dist = "lognormal", mean = 160.0, sigma = 0.05}
+    S0   = {dist = "lognormal", sigma = 0.05}
 
     [export]
     output_dir        = "output/"
@@ -37,18 +37,21 @@ TOML schema
     bvals  = "case_000/kidney.bval"
 
 Distribution conventions
-------------------------
+-----------------------
 ``"normal"``
-    Args: *mean*, *std* — plain Gaussian.
+    Args: *std* — plain Gaussian.  Mean is auto-anchored to the base config
+    value at sampling time.
 
 ``"lognormal"``
-    Args: *mean*, *sigma* — *mean* is the **real-space geometric mean**
-    (internally mapped to ``np.log(mean)``), *sigma* is the log-space std.
-    So for a diffusivity of roughly 0.002 mm²/s use ``mean = 0.002``.
+    Args: *sigma* — *sigma* is the log-space std.  Mean is auto-anchored to
+    the base config value (real-space geometric mean, ``log(base_value)`` is
+    passed to ``numpy``).  So for a diffusivity of roughly 0.002 mm²/s in the
+    base config, the sampled diffusivities will centre around 0.002 mm²/s.
 
 ``"dirichlet"``
-    Args: *alpha* (list) — Dirichlet concentration parameters, one per
-    compartment.  Sampled fractions always sum to 1.
+    Args: *kappa* (float) — scalar concentration parameter.  The Dirichlet
+    alpha vector is computed as ``base_fractions * kappa``, so the mean
+    fraction is always anchored to the base config values.
 """
 
 from __future__ import annotations
@@ -100,8 +103,8 @@ class ParamDist:
                Must be > 0. Only used when *dist* is ``"dirichlet"``.
 
     Examples:
-        >>> ParamDist(dist="normal", mean=180.0, std=10.0)
-        ParamDist(dist='normal', mean=180.0, std=10.0, sigma=1.0, alpha=[], kappa=0.0)
+        >>> ParamDist(dist="normal", std=10.0)
+        ParamDist(dist='normal', mean=0.0, std=10.0, sigma=1.0, alpha=[], kappa=0.0)
         >>> ParamDist(dist="dirichlet", kappa=10.0)
         ParamDist(dist='dirichlet', mean=0.0, std=1.0, sigma=1.0, alpha=[], kappa=10.0)
     """

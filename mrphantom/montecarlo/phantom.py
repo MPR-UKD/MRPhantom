@@ -15,7 +15,7 @@ Two execution modes are supported:
     mc_regions = {
         "cortex": RegionMCConfig(
             name="cortex",
-            S0=ParamDist(dist="normal", mean=180.0, std=10.0),
+            S0=ParamDist(dist="normal", std=10.0),
         )
     }
     phantom = MCDWIPhantom(n_samples=50, mc_regions=mc_regions, snr=30, seed=42)

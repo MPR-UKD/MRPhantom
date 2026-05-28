@@ -10,41 +10,41 @@ n_samples = 50
 
 [[montecarlo.regions]]
 name      = "cortex"
-S0        = {dist = "normal",    mean = 180.0, std  = 15.0}
-D         = [{dist = "lognormal", mean = 0.0015, sigma = 0.10},
-             {dist = "lognormal", mean = 0.005,  sigma = 0.15},
-             {dist = "lognormal", mean = 0.09,   sigma = 0.20}]
+S0        = {dist = "normal",    std  = 15.0}
+D         = [{dist = "lognormal", sigma = 0.10},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
 fractions = {dist = "dirichlet", kappa = 10.0}
 
 [[montecarlo.regions]]
 name      = "medulla"
-S0        = {dist = "normal",    mean = 160.0, std  = 12.0}
-D         = [{dist = "lognormal", mean = 0.0016, sigma = 0.10},
-             {dist = "lognormal", mean = 0.0055, sigma = 0.15},
-             {dist = "lognormal", mean = 0.11,   sigma = 0.20}]
+S0        = {dist = "normal",    std  = 12.0}
+D         = [{dist = "lognormal", sigma = 0.10},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
 fractions = {dist = "dirichlet", kappa = 10.0}
 
 [[montecarlo.regions]]
 name      = "hilum"
-S0        = {dist = "normal",    mean = 215.0, std  = 20.0}
-D         = [{dist = "lognormal", mean = 0.0011, sigma = 0.12},
-             {dist = "lognormal", mean = 0.009,  sigma = 0.15},
-             {dist = "lognormal", mean = 0.3,    sigma = 0.20}]
+S0        = {dist = "normal",    std  = 20.0}
+D         = [{dist = "lognormal", sigma = 0.12},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
 fractions = {dist = "dirichlet", kappa = 10.0}
 
 # --- Supporting regions (1-compartment) -----------------------------------
 
 [[montecarlo.regions]]
 name = "spleen"
-S0   = {dist = "normal",    mean = 74.0,  std   = 8.0}
-D    = [{dist = "lognormal", mean = 0.0012, sigma = 0.10}]
+S0   = {dist = "normal",    std   = 8.0}
+D    = [{dist = "lognormal", sigma = 0.10}]
 
 [[montecarlo.regions]]
 name = "liver"
-S0   = {dist = "normal",    mean = 42.0,  std   = 5.0}
-D    = [{dist = "lognormal", mean = 0.00098, sigma = 0.10},
-        {dist = "lognormal", mean = 0.015,   sigma = 0.15},
-        {dist = "lognormal", mean = 0.445,   sigma = 0.20}]
+S0   = {dist = "normal",    std   = 5.0}
+D    = [{dist = "lognormal", sigma = 0.10},
+        {dist = "lognormal", sigma = 0.15},
+        {dist = "lognormal", sigma = 0.20}]
 fractions = {dist = "dirichlet", kappa = 10.0}
 
 # Regions without explicit distributions use their base-config values

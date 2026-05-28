@@ -6,9 +6,11 @@ base config values are broadcast unchanged across all samples.
 
 Distribution conventions match :mod:`mrphantom.montecarlo.config`:
 
-- ``"normal"``    — plain Gaussian; args ``mean``, ``std``.
-- ``"lognormal"`` — *mean* is the real-space geometric mean (``log(mean)``
-  is passed to ``numpy``); *sigma* is the log-space std.
+- ``"normal"``    — plain Gaussian; arg ``std``. Mean is auto-anchored to the
+  base config value.
+- ``"lognormal"`` — arg ``sigma`` (log-space std). Mean is auto-anchored to the
+  base config value (real-space geometric mean, ``log(base_value)`` is passed
+  to ``numpy``).
 - ``"dirichlet"`` — *kappa* is a scalar concentration parameter; the
   Dirichlet alpha vector is computed as ``base_fractions * kappa``, so
   the mean fraction is always anchored to the base config values.
@@ -59,13 +61,21 @@ class SampledParams:
 # ---------------------------------------------------------------------------
 
 
-def _sample_scalar(dist: ParamDist, n: int, rng: np.random.Generator) -> np.ndarray:
-    """Draw *n* i.i.d. samples from a scalar distribution.
+def _sample_scalar(
+    dist: ParamDist,
+    base_value: float,
+    n: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Draw *n* i.i.d. samples from a scalar distribution centred on *base_value*.
+
+    The mean is always anchored to *base_value* — *dist.mean* is ignored.
 
     Args:
-        dist: Distribution specification (``"normal"`` or ``"lognormal"``).
-        n:    Number of samples.
-        rng:  Random generator.
+        dist:       Distribution specification (``"normal"`` or ``"lognormal"``).
+        base_value: Base config value used as the distribution mean.
+        n:          Number of samples.
+        rng:        Random generator.
 
     Returns:
         1-D ``float64`` array of length *n*.
@@ -74,11 +84,10 @@ def _sample_scalar(dist: ParamDist, n: int, rng: np.random.Generator) -> np.ndar
         ValueError: If *dist.dist* is not a scalar distribution.
     """
     if dist.dist == "normal":
-        return rng.normal(dist.mean, dist.std, size=n).astype(np.float64)
+        return rng.normal(base_value, dist.std, size=n).astype(np.float64)
     elif dist.dist == "lognormal":
-        # mean is real-space geometric mean → log_mean = log(mean)
         return rng.lognormal(
-            mean=np.log(dist.mean), sigma=dist.sigma, size=n
+            mean=np.log(base_value), sigma=dist.sigma, size=n
         ).astype(np.float64)
     else:
         raise ValueError(
@@ -188,7 +197,7 @@ def sample_region_params(
 
         # ---- S0 ----------------------------------------------------------
         if mc is not None and mc.S0 is not None:
-            S0_arr[i] = _sample_scalar(mc.S0, n_samples, rng)
+            S0_arr[i] = _sample_scalar(mc.S0, region.S0, n_samples, rng)
         else:
             S0_arr[i] = region.S0
 
@@ -200,7 +209,7 @@ def sample_region_params(
                     f"but region has {n_comp} component(s)."
                 )
             for c, dist in enumerate(mc.D):
-                D_arr[i, c] = _sample_scalar(dist, n_samples, rng)
+                D_arr[i, c] = _sample_scalar(dist, region.D[c], n_samples, rng)
         else:
             for c in range(n_comp):
                 D_arr[i, c] = region.D[c]

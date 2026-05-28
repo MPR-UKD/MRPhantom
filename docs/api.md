@@ -139,7 +139,7 @@ from mrphantom import ParamDist, RegionMCConfig, MCRunConfig, load_montecarlo_co
 
 | Symbol | Description |
 |---|---|
-| `ParamDist` | Dataclass holding a distribution specification (`dist`, `mean`, `std`, `sigma`, `alpha`, `kappa`). For `"dirichlet"` distributions on fractions, use `kappa` (scalar concentration) — the alpha vector is computed as `base_fractions * kappa` at sampling time. |
+| `ParamDist` | Dataclass holding a distribution specification (`dist`, `mean`, `std`, `sigma`, `alpha`, `kappa`). For `"normal"` and `"lognormal"` distributions, the mean is auto-anchored to the base config value — only spread parameters (`std` / `sigma`) are used at sampling time. For `"dirichlet"` on fractions, use `kappa` (scalar concentration) — the alpha vector is computed as `base_fractions * kappa`. |
 | `RegionMCConfig` | Dataclass holding per-region MC distributions (`name`, `S0`, `D`, `fractions`). |
 | `MCRunConfig` | Top-level dataclass for a Monte Carlo run (`snr`, `snr_region`, `seed`, `export`, `cases`, `n_samples`, `mc_regions`). |
 | `load_montecarlo_config(toml_path)` | Parse a Monte Carlo TOML config file into an `MCRunConfig`. |

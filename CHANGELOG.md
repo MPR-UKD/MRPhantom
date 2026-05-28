@@ -22,7 +22,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - CLI `mrphantom montecarlo` command.
 - `assets/kidney/mc.toml` — ready-to-run MC example with 5 randomised regions.
 - Full documentation: Monte Carlo TOML config guide (`docs/toml_mc_config.md`), MC phantom walkthrough in Usage Guide, API Reference updates.
-- Dirichlet fraction sampling simplified: specify a scalar `kappa` (concentration) instead of a manual `alpha` vector. The Dirichlet alpha is computed as `base_fractions * kappa`, so the mean is always anchored to the base config values. `kappa` field on `ParamDist`.
+- Dirichlet fraction sampling simplified: specify a scalar `kappa` (concentration) instead of a manual `alpha` vector. The Dirichlet alpha is computed as `base_fractions * kappa`, so the mean is always anchored to the base config values.
+- Normal and lognormal sampling simplified for S0 and D: the mean is auto-anchored to the base config value — only spread parameters (`std` / `sigma`) need to be specified. `mean` field on `ParamDist` is no longer required (ignored at sampling time).
 
 ### Changed
 

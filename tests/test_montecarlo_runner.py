@@ -161,7 +161,7 @@ class TestRunMontecarloReproducibility:
         """Param sampling is reproducible from master seed."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=10.0),
+            S0=ParamDist(dist="normal", std=10.0),
         )}
         r1 = run_montecarlo(**_mc_kwargs(mini_config, mc_regions=mc, seed=42, n_samples=5))
         r2 = run_montecarlo(**_mc_kwargs(mini_config, mc_regions=mc, seed=42, n_samples=5))
@@ -191,7 +191,7 @@ class TestRunMontecarloParamSampling:
         """When S0 is randomised, sampled_params.S0 differs across draws."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=15.0),
+            S0=ParamDist(dist="normal", std=15.0),
         )}
         result = run_montecarlo(
             **_mc_kwargs(mini_config, mc_regions=mc, n_samples=10, seed=5)
@@ -209,7 +209,7 @@ class TestRunMontecarloParamSampling:
         """When S0 is randomised, GT signal differs across samples."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=20.0),
+            S0=ParamDist(dist="normal", std=20.0),
         )}
         result = run_montecarlo(
             **_mc_kwargs(mini_config, mc_regions=mc, snr=None, n_samples=5, seed=6)

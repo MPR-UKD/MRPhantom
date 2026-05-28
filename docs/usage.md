@@ -189,10 +189,10 @@ from mrphantom.montecarlo.config import ParamDist, RegionMCConfig
 mc_regions = {
     "cortex": RegionMCConfig(
         name="cortex",
-        S0=ParamDist(dist="normal", mean=180.0, std=10.0),
+        S0=ParamDist(dist="normal", std=10.0),
         D=[
-            ParamDist(dist="lognormal", mean=0.003, sigma=0.10),
-            ParamDist(dist="lognormal", mean=0.001, sigma=0.05),
+            ParamDist(dist="lognormal", sigma=0.10),
+            ParamDist(dist="lognormal", sigma=0.05),
         ],
         fractions=ParamDist(dist="dirichlet", kappa=10.0),
     )

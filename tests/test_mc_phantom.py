@@ -23,8 +23,8 @@ def _mc_regions_a() -> dict[str, RegionMCConfig]:
     return {
         "region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=10.0),
-            D=[ParamDist(dist="lognormal", mean=0.001, sigma=0.1)],
+            S0=ParamDist(dist="normal", std=10.0),
+            D=[ParamDist(dist="lognormal", sigma=0.1)],
         )
     }
 

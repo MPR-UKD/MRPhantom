@@ -147,7 +147,7 @@ class TestRegionMCConfig:
 
     def test_with_s0_dist(self):
         """S0 distribution is stored correctly."""
-        dist = ParamDist(dist="normal", mean=180.0, std=10.0)
+        dist = ParamDist(dist="normal", std=10.0)
         rmc = RegionMCConfig(name="cortex", S0=dist)
         assert rmc.S0 is dist
 

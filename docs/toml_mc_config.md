@@ -17,15 +17,15 @@ n_samples = 100
 
 [[montecarlo.regions]]
 name      = "cortex"
-S0        = {dist = "normal",    mean = 180.0, std  = 15.0}
-D         = [{dist = "lognormal", mean = 0.0015, sigma = 0.10},
-             {dist = "lognormal", mean = 0.005,  sigma = 0.15},
-             {dist = "lognormal", mean = 0.09,   sigma = 0.20}]
+S0        = {dist = "normal",    std  = 15.0}
+D         = [{dist = "lognormal", sigma = 0.10},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
 fractions = {dist = "dirichlet", kappa = 10.0}
- 
- [[montecarlo.regions]]
- name = "medulla"
- S0   = {dist = "lognormal", mean = 160.0, sigma = 0.05}
+
+[[montecarlo.regions]]
+name = "medulla"
+S0   = {dist = "lognormal", sigma = 0.05}
 
 [export]
 output_dir        = "output/"
@@ -77,27 +77,27 @@ Any of `S0`, `D`, `fractions` may be omitted independently; omitted fields use t
 ### `"normal"`
 
 Plain Gaussian. Useful for S0, which is always positive in practice and can be modeled as approximately normal.
+The mean is auto-anchored to the base config value — you only specify the spread.
 
 ```toml
-S0 = {dist = "normal", mean = 180.0, std = 15.0}
+S0 = {dist = "normal", std = 15.0}
 ```
 
 | Parameter | Description |
 |---|---|
-| `mean` | Distribution mean. |
 | `std` | Standard deviation. |
 
 ### `"lognormal"`
 
-Log-normal parameterized by the **real-space geometric mean**. Use for diffusivities, which are strictly positive and span orders of magnitude.
+Log-normal distribution for strictly-positive parameters (diffusivities).
+The mean is auto-anchored to the base config value (real-space geometric mean) — you only specify the log-space spread.
 
 ```toml
-D = [{dist = "lognormal", mean = 0.0015, sigma = 0.10}]
+D = [{dist = "lognormal", sigma = 0.10}]
 ```
 
 | Parameter | Description |
 |---|---|
-| `mean` | Real-space geometric mean (e.g. `0.0015` mm²/s). Stored internally as `log(mean)`. |
 | `sigma` | Log-space standard deviation. A value of `0.10` is a ≈10% geometric coefficient of variation. |
 
 ### `"dirichlet"`

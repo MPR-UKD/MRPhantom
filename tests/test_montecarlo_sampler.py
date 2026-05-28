@@ -33,27 +33,27 @@ class TestSampleScalar:
 
     def test_normal_returns_correct_shape(self):
         """Normal sampling returns an array of the requested length."""
-        dist = ParamDist(dist="normal", mean=5.0, std=1.0)
-        out = _sample_scalar(dist, 20, _make_rng())
+        dist = ParamDist(dist="normal", std=1.0)
+        out = _sample_scalar(dist, base_value=5.0, n=20, rng=_make_rng())
         assert out.shape == (20,)
         assert out.dtype == np.float64
 
     def test_normal_mean_approx(self):
-        """Normal samples have approximately the specified mean."""
-        dist = ParamDist(dist="normal", mean=100.0, std=5.0)
-        out = _sample_scalar(dist, 10_000, _make_rng(1))
+        """Normal samples have approximately the specified base value as mean."""
+        dist = ParamDist(dist="normal", std=5.0)
+        out = _sample_scalar(dist, base_value=100.0, n=10_000, rng=_make_rng(1))
         np.testing.assert_allclose(out.mean(), 100.0, atol=1.0)
 
     def test_lognormal_returns_positive(self):
         """Lognormal samples are always positive."""
-        dist = ParamDist(dist="lognormal", mean=0.003, sigma=0.1)
-        out = _sample_scalar(dist, 100, _make_rng(2))
+        dist = ParamDist(dist="lognormal", sigma=0.1)
+        out = _sample_scalar(dist, base_value=0.003, n=100, rng=_make_rng(2))
         assert np.all(out > 0)
 
     def test_lognormal_geometric_mean_approx(self):
-        """Lognormal geometric mean is approximately dist.mean."""
-        dist = ParamDist(dist="lognormal", mean=0.003, sigma=0.1)
-        out = _sample_scalar(dist, 50_000, _make_rng(3))
+        """Lognormal geometric mean is approximately the base value."""
+        dist = ParamDist(dist="lognormal", sigma=0.1)
+        out = _sample_scalar(dist, base_value=0.003, n=50_000, rng=_make_rng(3))
         geom_mean = np.exp(np.log(out).mean())
         np.testing.assert_allclose(geom_mean, 0.003, rtol=0.02)
 
@@ -61,7 +61,7 @@ class TestSampleScalar:
         """A non-scalar distribution raises ValueError."""
         dist = ParamDist(dist="dirichlet", alpha=[1.0, 1.0])
         with pytest.raises(ValueError, match="scalar distribution"):
-            _sample_scalar(dist, 10, _make_rng())
+            _sample_scalar(dist, base_value=1.0, n=10, rng=_make_rng())
 
 
 # ---------------------------------------------------------------------------
@@ -164,17 +164,17 @@ class TestSampleRegionParams:
         """S0 values differ across samples when a distribution is specified."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=10.0),
+            S0=ParamDist(dist="normal", std=10.0),
         )}
         result = sample_region_params(mini_config, mc, n_samples=50, rng=_make_rng(7))
-        # Values should not all be 100 (they're sampled)
+        # Values should not all be 100 (they're sampled from base S0=100)
         assert not np.all(result.S0[0] == 100.0)
 
     def test_s0_not_sampled_region_stays_fixed(self, mini_config):
         """Regions without MC spec have fixed S0 even when others are sampled."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=10.0),
+            S0=ParamDist(dist="normal", std=10.0),
         )}
         result = sample_region_params(mini_config, mc, n_samples=20, rng=_make_rng(8))
         # region_b (index 1) has no MC spec → fixed S0=80
@@ -185,8 +185,8 @@ class TestSampleRegionParams:
         mc = {"region_b": RegionMCConfig(
             name="region_b",
             D=[
-                ParamDist(dist="lognormal", mean=0.001, sigma=0.1),
-                ParamDist(dist="lognormal", mean=0.01, sigma=0.1),
+                ParamDist(dist="lognormal", sigma=0.1),
+                ParamDist(dist="lognormal", sigma=0.1),
             ],
         )}
         result = sample_region_params(mini_config, mc, n_samples=20, rng=_make_rng(9))
@@ -230,8 +230,8 @@ class TestSampleRegionParams:
         mc = {"region_a": RegionMCConfig(
             name="region_a",
             D=[
-                ParamDist(dist="lognormal", mean=0.001, sigma=0.1),
-                ParamDist(dist="lognormal", mean=0.002, sigma=0.1),  # too many
+                ParamDist(dist="lognormal", sigma=0.1),
+                ParamDist(dist="lognormal", sigma=0.1),  # too many
             ],
         )}
         with pytest.raises(ValueError, match="component"):
@@ -250,7 +250,7 @@ class TestSampleRegionParams:
         """ValueError when fractions distribution is not 'dirichlet'."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            fractions=ParamDist(dist="normal", mean=0.5, std=0.1),
+            fractions=ParamDist(dist="normal", std=0.1),
         )}
         with pytest.raises(ValueError, match="dirichlet"):
             sample_region_params(mini_config, mc, n_samples=5, rng=_make_rng())
@@ -259,7 +259,7 @@ class TestSampleRegionParams:
         """Two calls with the same seed return identical results."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=5.0),
+            S0=ParamDist(dist="normal", std=5.0),
         )}
         r1 = sample_region_params(mini_config, mc, n_samples=10, rng=_make_rng(42))
         r2 = sample_region_params(mini_config, mc, n_samples=10, rng=_make_rng(42))
@@ -269,7 +269,7 @@ class TestSampleRegionParams:
         """Two calls with different seeds produce different results."""
         mc = {"region_a": RegionMCConfig(
             name="region_a",
-            S0=ParamDist(dist="normal", mean=100.0, std=10.0),
+            S0=ParamDist(dist="normal", std=10.0),
         )}
         r1 = sample_region_params(mini_config, mc, n_samples=20, rng=_make_rng(1))
         r2 = sample_region_params(mini_config, mc, n_samples=20, rng=_make_rng(2))
