@@ -6,6 +6,41 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.0] — 2026-05-28
+
+### Added
+
+- Ground-truth (noise-free) signal storage throughout the pipeline: `synthesize_phantom()` returns `signal_gt` as a third element; `PhantomData.signal_gt` field; HDF5 round-trip preserves `signal_gt`; old HDF5 files load with `signal_gt=None` (backward compatible).
+- `DWIPhantom._run_synthesis(rng, config=None)` extracted as a protected method. `synthesize()` delegates to it — zero behaviour change for existing callers.
+- Full Monte Carlo subpackage (`mrphantom.montecarlo`):
+  - `ParamDist`, `RegionMCConfig`, `MCRunConfig` config dataclasses with TOML loader (`load_montecarlo_config`).
+  - `SampledParams`, `sample_region_params` — parameter sampling from normal, lognormal, and Dirichlet distributions (using NumPy, no SciPy dependency).
+  - `MCResult`, `run_montecarlo` — functional MC runner with two-stream RNG (parameter + independent noise seeds per sample).
+  - `MCPhantomData`, `save_mc_hdf5`, `load_mc_hdf5` — 5-D HDF5 I/O with `/sampled_params/` group.
+- `MCDWIPhantom(DWIPhantom)` — class-centred Monte Carlo API with `setup()` step, batch mode `synthesize()` (5-D output), lazy per-sample `step(i)`, and incremental `open_h5()` writing via `_H5Writer`.
+- `MCDWIPhantom.from_toml(path)` classmethod factory.
+- CLI `mrphantom montecarlo` command.
+- `assets/kidney/mc.toml` — ready-to-run MC example with 5 randomised regions.
+- Full documentation: Monte Carlo TOML config guide (`docs/toml_mc_config.md`), MC phantom walkthrough in Usage Guide, API Reference updates.
+- Dirichlet fraction sampling simplified: specify a scalar `kappa` (concentration) instead of a manual `alpha` vector. The Dirichlet alpha is computed as `base_fractions * kappa`, so the mean is always anchored to the base config values. `kappa` field on `ParamDist`.
+
+### Changed
+
+- `_build_sample_config` moved from `runner.py` to `sampler.py` (no duplicate).
+- Module exports updated: `mrphantom/__init__.py`, `mrphantom/montecarlo/__init__.py` now export `MCDWIPhantom`.
+
+### Added tests
+
+- `test_mc_phantom.py` — 80 tests covering full `MCDWIPhantom` lifecycle (init, load_case, setup, synthesize, step, save, open_h5, get_params, from_toml, full chains).
+- `test_montecarlo_config.py` — TOML parsing, ParamDist/RegionMCConfig dataclasses.
+- `test_montecarlo_sampler.py` — scalar + Dirichlet sampling, reproducibility, validation.
+- `test_montecarlo_runner.py` — `run_montecarlo` shape, noise, reproducibility, parameter randomisation.
+- `test_mc_io.py` — `save_mc_hdf5` / `load_mc_hdf5` round-trip for all fields.
+- `test_mc_cli.py` — `mrphantom montecarlo` CLI integration.
+- New mean-anchoring tests for `_sample_dirichlet` and `sample_region_params` fractions.
+
+---
+
 ## [0.3.0] — 2026-05-04
 
 ### Breaking changes

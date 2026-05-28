@@ -174,6 +174,98 @@ The region matching is name-driven, not index-hardcoded, so it remains correct e
 
 ---
 
+## Monte Carlo simulation (`MCDWIPhantom`)
+
+`MCDWIPhantom` extends `DWIPhantom` with a Monte Carlo outer loop. Tissue parameters are sampled from per-region distributions and every draw gets an independent noise seed.  The lifecycle has one extra step — `setup()` — which must be called between `load_case()` and any synthesis call.
+
+### Batch mode
+
+Synthesize all *N* samples in memory, then save as a single HDF5 file:
+
+```python
+from mrphantom import MCDWIPhantom, load_dwi_config
+from mrphantom.montecarlo.config import ParamDist, RegionMCConfig
+
+mc_regions = {
+    "cortex": RegionMCConfig(
+        name="cortex",
+        S0=ParamDist(dist="normal", mean=180.0, std=10.0),
+        D=[
+            ParamDist(dist="lognormal", mean=0.003, sigma=0.10),
+            ParamDist(dist="lognormal", mean=0.001, sigma=0.05),
+        ],
+        fractions=ParamDist(dist="dirichlet", kappa=10.0),
+    )
+}
+
+config = load_dwi_config("phantom.json", "bvals.txt")
+phantom = MCDWIPhantom(n_samples=50, mc_regions=mc_regions, snr=30, seed=42)
+phantom.load_case(config).setup().synthesize().save("mc_output.h5")
+
+phantom.signal     # np.ndarray, shape (X, Y, Z, n_b, 50)
+phantom.signal_gt  # noise-free GT, same shape
+```
+
+### Lazy mode
+
+Write one sample at a time into a pre-allocated HDF5 file — useful when *N* is large and all samples don't fit in memory at once:
+
+```python
+phantom = MCDWIPhantom(n_samples=200, mc_regions=mc_regions, snr=30, seed=42)
+phantom.load_case(config).setup()
+
+with phantom.open_h5("mc_output.h5") as h5:
+    for i in range(phantom.n_samples):
+        phantom.step(i)      # synthesize sample i → 4-D array in phantom.signal
+        h5.flush(i)          # write sample i to the pre-allocated HDF5 slice
+```
+
+Both modes produce identical HDF5 files for the same seed.
+
+### Noise-ensemble mode
+
+Pass `mc_regions={}` (the default) to keep tissue parameters fixed across all draws — each sample differs only in its noise realisation:
+
+```python
+phantom = MCDWIPhantom(n_samples=100, snr=20, seed=0)
+phantom.load_case(config).setup().synthesize().save("noise_ensemble.h5")
+```
+
+### Loading from a TOML config
+
+```python
+phantom = MCDWIPhantom.from_toml("assets/kidney/mc.toml")
+# phantom._mc_config holds the full MCRunConfig (cases, export, ...)
+```
+
+Or run from the CLI:
+
+```bash
+mrphantom montecarlo assets/kidney/mc.toml
+```
+
+See the [TOML Monte Carlo config guide](toml_mc_config.md) for the full TOML schema.
+
+### Reading MC results back
+
+```python
+from mrphantom import load_mc_hdf5
+
+data = load_mc_hdf5("mc_output.h5")
+
+data.signal             # np.ndarray (X, Y, Z, n_b, N)
+data.signal_gt          # np.ndarray (X, Y, Z, n_b, N) — noise-free GT
+data.S0_samples         # np.ndarray (n_regions, N)
+data.D_samples          # np.ndarray (n_regions, max_comp, N)
+data.fractions_samples  # np.ndarray (n_regions, max_comp, N)
+data.region_names       # list[str]
+data.n_samples          # int
+data.snr                # float | None
+data.seed               # int | None
+```
+
+---
+
 ## Reading back saved files
 
 **NIfTI:**
