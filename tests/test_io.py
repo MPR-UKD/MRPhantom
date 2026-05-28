@@ -63,12 +63,12 @@ def test_save_nifti_roundtrip(mini_nifti, tmp_path):
 
 @pytest.fixture
 def synthesized(mini_config):
-    signal, signal_img = synthesize_phantom(mini_config)
-    return signal, signal_img, mini_config
+    signal, signal_gt, signal_img = synthesize_phantom(mini_config)
+    return signal, signal_gt, signal_img, mini_config
 
 
 def test_save_hdf5_creates_file(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     result = save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -78,7 +78,7 @@ def test_save_hdf5_creates_file(synthesized, tmp_path):
 
 
 def test_save_hdf5_returns_path(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     result = save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -88,7 +88,7 @@ def test_save_hdf5_returns_path(synthesized, tmp_path):
 
 
 def test_save_hdf5_appends_extension_if_missing(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "no_ext"
     result = save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -99,7 +99,7 @@ def test_save_hdf5_appends_extension_if_missing(synthesized, tmp_path):
 
 
 def test_load_hdf5_returns_phantom_data(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -110,7 +110,7 @@ def test_load_hdf5_returns_phantom_data(synthesized, tmp_path):
 
 
 def test_load_hdf5_signal_roundtrip(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -121,7 +121,7 @@ def test_load_hdf5_signal_roundtrip(synthesized, tmp_path):
 
 
 def test_load_hdf5_volumes_roundtrip(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -132,7 +132,7 @@ def test_load_hdf5_volumes_roundtrip(synthesized, tmp_path):
 
 
 def test_load_hdf5_metadata(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -146,7 +146,7 @@ def test_load_hdf5_metadata(synthesized, tmp_path):
 
 
 def test_load_hdf5_snr_none_when_not_stored(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -163,7 +163,7 @@ def test_load_hdf5_missing_file_raises(tmp_path):
 
 
 def test_phantom_data_as_nifti(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -176,7 +176,7 @@ def test_phantom_data_as_nifti(synthesized, tmp_path):
 
 
 def test_save_hdf5_missing_segmentation_raises(synthesized, tmp_path):
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     with pytest.raises(FileNotFoundError):
         save_hdf5(
             signal, signal_img, config.bvalues, tmp_path / "ghost.nii.gz",
@@ -192,7 +192,7 @@ def test_save_hdf5_missing_segmentation_raises(synthesized, tmp_path):
 
 def test_save_hdf5_stores_snr_region(synthesized, tmp_path):
     """snr_region attribute should be written to the HDF5 root group."""
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -205,7 +205,7 @@ def test_save_hdf5_stores_snr_region(synthesized, tmp_path):
 
 def test_save_hdf5_snr_region_none_not_stored(synthesized, tmp_path):
     """When snr_region is None the attribute should be absent, loading to None."""
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -218,7 +218,7 @@ def test_save_hdf5_snr_region_none_not_stored(synthesized, tmp_path):
 
 def test_snr_region_roundtrip(synthesized, tmp_path):
     """Full save/load round-trip preserves both snr and snr_region."""
-    signal, signal_img, config = synthesized
+    signal, signal_gt, signal_img, config = synthesized
     out = tmp_path / "out.h5"
     save_hdf5(
         signal, signal_img, config.bvalues, config.nifti_path, out,
@@ -228,3 +228,70 @@ def test_snr_region_roundtrip(synthesized, tmp_path):
     data = load_hdf5(out)
     assert data.snr == pytest.approx(30.0)
     assert data.snr_region == "region_b"
+
+
+# ---------------------------------------------------------------------------
+# signal_gt — HDF5 round-trip
+# ---------------------------------------------------------------------------
+
+
+def test_save_hdf5_writes_signal_gt(synthesized, tmp_path):
+    """signal_gt dataset must be present when passed to save_hdf5."""
+    signal, signal_gt, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, signal_gt=signal_gt,
+    )
+    import h5py
+    with h5py.File(out, "r") as f:
+        assert "signal_gt" in f
+
+
+def test_save_hdf5_omits_signal_gt_when_none(synthesized, tmp_path):
+    """When signal_gt=None, no signal_gt dataset should be written."""
+    signal, signal_gt, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id,
+    )
+    import h5py
+    with h5py.File(out, "r") as f:
+        assert "signal_gt" not in f
+
+
+def test_load_hdf5_signal_gt_roundtrip(synthesized, tmp_path):
+    """signal_gt must survive a full save/load cycle unchanged."""
+    signal, signal_gt, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, signal_gt=signal_gt,
+    )
+    data = load_hdf5(out)
+    np.testing.assert_allclose(data.signal_gt, signal_gt, rtol=1e-10)
+
+
+def test_load_hdf5_signal_gt_none_when_absent(synthesized, tmp_path):
+    """Files without /signal_gt must load with signal_gt=None (backward compat)."""
+    signal, signal_gt, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id,
+    )
+    data = load_hdf5(out)
+    assert data.signal_gt is None
+
+
+def test_load_hdf5_signal_gt_shape(synthesized, tmp_path):
+    """Loaded signal_gt must have the same shape as signal."""
+    signal, signal_gt, signal_img, config = synthesized
+    out = tmp_path / "out.h5"
+    save_hdf5(
+        signal, signal_img, config.bvalues, config.nifti_path, out,
+        case_id=config.case_id, signal_gt=signal_gt,
+    )
+    data = load_hdf5(out)
+    assert data.signal_gt.shape == data.signal.shape

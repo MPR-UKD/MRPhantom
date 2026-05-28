@@ -17,6 +17,7 @@ Typical usage
     phantom.load_case(config).synthesize().save("out.nii.gz", "out.h5")
 
     signal    = phantom.signal        # 4-D float64 array (X, Y, Z, n_bvalues)
+    signal_gt = phantom.signal_gt     # noise-free ground-truth, same shape
     img       = phantom.signal_img    # nibabel.Nifti1Image
 
 **Convenience factory**::
@@ -78,6 +79,7 @@ class DWIPhantom(MRPhantom):
         self.snr_region = snr_region
         self._config: DWIConfig | None = None
         self._signal: np.ndarray | None = None
+        self._signal_gt: np.ndarray | None = None
         self._signal_img: nib.Nifti1Image | None = None
 
     # ------------------------------------------------------------------
@@ -137,6 +139,7 @@ class DWIPhantom(MRPhantom):
         """
         self._config = config
         self._signal = None
+        self._signal_gt = None
         self._signal_img = None
         return self
 
@@ -145,7 +148,7 @@ class DWIPhantom(MRPhantom):
 
         Evaluates the multi-exponential model for every segmented region and
         optionally adds Rician noise. Results are cached on the instance and
-        exposed via :attr:`signal` and :attr:`signal_img`.
+        exposed via :attr:`signal`, :attr:`signal_gt`, and :attr:`signal_img`.
 
         Returns:
             DWIPhantom: self, enables chaining:
@@ -164,7 +167,7 @@ class DWIPhantom(MRPhantom):
         if self.snr is not None:
             rng = np.random.default_rng(self.seed)
 
-        self._signal, self._signal_img = synthesize_phantom(
+        self._signal, self._signal_gt, self._signal_img = synthesize_phantom(
             self._config, snr=self.snr, rng=rng, snr_region=self.snr_region
         )
         return self
@@ -243,6 +246,7 @@ class DWIPhantom(MRPhantom):
                         description=self._config.description,
                         snr=self.snr,
                         snr_region=self.snr_region,
+                        signal_gt=self._signal_gt,
                     )
                 )
             else:
@@ -282,6 +286,23 @@ class DWIPhantom(MRPhantom):
                 f"{type(self).__name__}.signal accessed before synthesize()."
             )
         return self._signal
+
+    @property
+    def signal_gt(self) -> np.ndarray:
+        """Noise-free ground-truth signal, shape ``(X, Y, Z, n_bvalues)``.
+
+        Always identical to :attr:`signal` when the phantom was created with
+        ``snr=None`` (noise-free).  When noise was added, this array holds the
+        clean model output before Rician corruption.
+
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
+        """
+        if self._signal_gt is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.signal_gt accessed before synthesize()."
+            )
+        return self._signal_gt
 
     @property
     def signal_img(self) -> nib.Nifti1Image:

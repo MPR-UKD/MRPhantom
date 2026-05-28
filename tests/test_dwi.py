@@ -68,13 +68,15 @@ def test_load_case_makes_config_accessible(mini_config):
 
 
 def test_load_case_clears_stale_signal(mini_config):
-    """After load_case on a used phantom, signal must be inaccessible."""
+    """After load_case on a used phantom, signal and signal_gt must be inaccessible."""
     p = DWIPhantom()
     p.load_case(mini_config).synthesize()
     # Now reload a case — stale signal should be cleared
     p.load_case(mini_config)
     with pytest.raises(RuntimeError):
         _ = p.signal
+    with pytest.raises(RuntimeError):
+        _ = p.signal_gt
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +102,13 @@ def test_synthesize_signal_accessible(mini_config):
     assert p.signal.shape == (4, 4, 4, 3)
 
 
+def test_synthesize_signal_gt_accessible(mini_config):
+    p = DWIPhantom()
+    p.load_case(mini_config).synthesize()
+    assert isinstance(p.signal_gt, np.ndarray)
+    assert p.signal_gt.shape == (4, 4, 4, 3)
+
+
 def test_synthesize_signal_img_accessible(mini_config):
     p = DWIPhantom()
     p.load_case(mini_config).synthesize()
@@ -122,6 +131,13 @@ def test_signal_before_synthesize_raises(mini_config):
     p.load_case(mini_config)
     with pytest.raises(RuntimeError, match="synthesize"):
         _ = p.signal
+
+
+def test_signal_gt_before_synthesize_raises(mini_config):
+    p = DWIPhantom()
+    p.load_case(mini_config)
+    with pytest.raises(RuntimeError, match="synthesize"):
+        _ = p.signal_gt
 
 
 def test_signal_img_before_synthesize_raises(mini_config):
@@ -273,3 +289,30 @@ def test_synthesize_invalid_snr_region_raises(mini_config):
     p.load_case(mini_config)
     with pytest.raises(ValueError, match="snr_region"):
         p.synthesize()
+
+
+# ---------------------------------------------------------------------------
+# signal_gt — noise-free ground-truth property
+# ---------------------------------------------------------------------------
+
+
+def test_signal_gt_equals_signal_when_noise_free(mini_config):
+    """Without noise, signal_gt and signal must be identical."""
+    p = DWIPhantom()
+    p.load_case(mini_config).synthesize()
+    np.testing.assert_array_equal(p.signal_gt, p.signal)
+
+
+def test_signal_gt_differs_from_noisy_signal(mini_config):
+    """With noise applied, signal_gt must differ from the noisy signal."""
+    p = DWIPhantom(snr=10.0, seed=0)
+    p.load_case(mini_config).synthesize()
+    assert not np.allclose(p.signal, p.signal_gt)
+
+
+def test_signal_gt_is_noise_free(mini_config):
+    """signal_gt must equal the clean model output independent of the noise seed."""
+    clean = DWIPhantom().load_case(mini_config).synthesize().signal_gt
+    noisy_phantom = DWIPhantom(snr=10.0, seed=0)
+    noisy_phantom.load_case(mini_config).synthesize()
+    np.testing.assert_array_equal(noisy_phantom.signal_gt, clean)

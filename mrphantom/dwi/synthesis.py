@@ -21,7 +21,7 @@ def synthesize_phantom(
     snr: float | None = None,
     rng: np.random.Generator | None = None,
     snr_region: str | None = None,
-) -> tuple[np.ndarray, nib.Nifti1Image]:
+) -> tuple[np.ndarray, np.ndarray, nib.Nifti1Image]:
     """Synthesize a 4-D DWI phantom from ground-truth diffusion parameters.
 
     For each region defined in *config*, the multi-exponential signal model::
@@ -56,7 +56,10 @@ def synthesize_phantom(
         Tuple of:
 
         - ``signal`` — 4-D ``float64`` array with shape ``(X, Y, Z, n_bvalues)``
-          where X, Y, Z are the spatial dimensions of the segmentation.
+          containing the (possibly noisy) synthesized signal.
+        - ``signal_gt`` — 4-D ``float64`` array with the same shape as
+          ``signal``, containing the noise-free ground-truth signal.  Identical
+          to ``signal`` when *snr* is ``None``.
         - ``signal_img`` — :class:`nibabel.Nifti1Image` sharing the segmentation
           affine and header, wrapping *signal*.
 
@@ -91,6 +94,9 @@ def synthesize_phantom(
         # Assign to all voxels belonging to this region: (N_vox, n_b)
         signal[mask] = region_signal
 
+    # Capture noise-free ground-truth before any noise is applied.
+    signal_gt = signal.copy()
+
     if snr is not None:
         if rng is None:
             rng = np.random.default_rng()
@@ -113,4 +119,4 @@ def synthesize_phantom(
         signal = np.sqrt((signal + noise_real) ** 2 + noise_imag**2)
 
     signal_img = nib.Nifti1Image(signal, seg_img.affine, seg_img.header)
-    return signal, signal_img
+    return signal, signal_gt, signal_img
