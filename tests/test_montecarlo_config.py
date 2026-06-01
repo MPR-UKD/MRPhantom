@@ -43,8 +43,8 @@ filename_template = "{{case_id}}"
 formats = ["hdf5"]
 
 [[cases]]
-config = "{_JSON_PATH}"
-bvals  = "{_BVAL_PATH}"
+config = "{_JSON_PATH.as_posix()}"
+bvals  = "{_BVAL_PATH.as_posix()}"
 
 {extra}
 """,
@@ -198,8 +198,8 @@ class TestLoadMontecarloConfig:
 n_samples = 5
 
 [[cases]]
-config = "{_JSON_PATH}"
-bvals  = "{_BVAL_PATH}"
+config = "{_JSON_PATH.as_posix()}"
+bvals  = "{_BVAL_PATH.as_posix()}"
 """,
             encoding="utf-8",
         )
@@ -220,8 +220,8 @@ seed       = 1
 n_samples = 5
 
 [[cases]]
-config = "{_JSON_PATH}"
-bvals  = "{_BVAL_PATH}"
+config = "{_JSON_PATH.as_posix()}"
+bvals  = "{_BVAL_PATH.as_posix()}"
 """,
             encoding="utf-8",
         )
@@ -345,8 +345,8 @@ S0   = {dist = "lognormal", mean = 160.0, sigma = 0.05}
 n_samples = 5
 
 [[cases]]
-config = "{case_dir / 'kid_000_synthetic.json'}"
-bvals  = "{case_dir / 'kidney.bval'}"
+config = "{(case_dir / 'kid_000_synthetic.json').as_posix()}"
+bvals  = "{(case_dir / 'kidney.bval').as_posix()}"
 """,
             encoding="utf-8",
         )

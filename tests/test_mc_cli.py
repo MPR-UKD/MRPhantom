@@ -39,13 +39,13 @@ seed = 1
 n_samples = {n_samples}
 
 [export]
-output_dir        = "{tmp_path / 'output'}"
+output_dir        = "{(tmp_path / 'output').as_posix()}"
 filename_template = "{{case_id}}"
 formats           = ["hdf5"]
 
 [[cases]]
-config = "{_JSON_PATH}"
-bvals  = "{_BVAL_PATH}"
+config = "{_JSON_PATH.as_posix()}"
+bvals  = "{_BVAL_PATH.as_posix()}"
 """,
         encoding="utf-8",
     )
