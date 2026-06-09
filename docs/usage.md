@@ -8,15 +8,16 @@
 
 ```python
 from pathlib import Path
-from mrphantom import DWIPhantom, load_phantom_config
+from mrphantom import DWIPhantom, load_dwi_config
 
 # 1. Load case data — parses JSON, loads b-values, resolves null regions
-config = load_phantom_config(
+config = load_dwi_config(
     Path("assets/kidney/case_000/kid_000_synthetic.json"),
     Path("assets/kidney/case_000/kidney.bval"),
 )
 
 # 2. Create the phantom — only acquisition settings go here, no data yet
+#     Optional: snr_region="cortex" pins the noise reference to that region's S0
 phantom = DWIPhantom(snr=30, seed=42)
 
 # 3. Attach the case — clears any previously cached signal, returns self
@@ -56,7 +57,7 @@ After `synthesize()` is called, results are available as read-only properties:
 ```python
 phantom.signal        # np.ndarray, shape (X, Y, Z, n_bvalues), dtype float64
 phantom.signal_img    # nibabel.Nifti1Image (same data, with affine from segmentation)
-phantom.config        # PhantomConfig (available after load_case(), before synthesize())
+    phantom.config        # DWIConfig (available after load_case(), before synthesize())
 ```
 
 Accessing any property before its corresponding call raises a `RuntimeError`:
@@ -76,7 +77,7 @@ phantom.signal     # RuntimeError: call synthesize() first
 phantom = DWIPhantom(snr=30, seed=42)
 
 for json_path, bval_path in case_paths:
-    config = load_phantom_config(json_path, bval_path)
+    config = load_dwi_config(json_path, bval_path)
     phantom.load_case(config).synthesize().save(f"output/{config.case_id}.h5")
 
     # phantom.signal is available here for the current case
@@ -117,14 +118,14 @@ str(DWIPhantom())                  # "DWIPhantom()"
 ## Batch synthesis from a TOML run-config
 
 ```python
-from mrphantom import load_run_config, load_phantom_config, DWIPhantom
+from mrphantom import load_run_config, load_dwi_config, DWIPhantom
 
 run = load_run_config("experiment.toml")
 phantom = DWIPhantom(snr=run.snr, seed=run.seed)
 
 for entry in run.cases:
     # entry.config and entry.bvals are absolute Path objects
-    cfg = load_phantom_config(entry.config, entry.bvals)
+    cfg = load_dwi_config(entry.config, entry.bvals)
 
     # resolve_paths interpolates {case_id} and appends the right extensions
     out_paths = run.export.resolve_paths(cfg.case_id)
@@ -149,11 +150,11 @@ See the [TOML run-config guide](toml_run_config.md) for the full TOML schema.
 ```python
 import nibabel as nib
 from mrphantom import (
-    DWIPhantom, load_phantom_config,
+    DWIPhantom, load_dwi_config,
     get_evaluation_segments, get_fitting_mask,
 )
 
-config  = load_phantom_config("phantom.json", "bvals.txt")
+config  = load_dwi_config("phantom.json", "bvals.txt")
 phantom = DWIPhantom().load_case(config).synthesize()
 
 # Integer label indices for cortex, medulla, hilum
@@ -286,7 +287,7 @@ from mrphantom import load_hdf5
 data = load_hdf5("kidney_001.h5")
 
 data.signal        # np.ndarray  (X, Y, Z, n_bvalues)
-data.bvalues       # np.ndarray  (n_bvalues,)
+data.volumes       # np.ndarray  (n_bvalues,)
 data.segmentation  # np.ndarray  (X, Y, Z) — integer label map
 data.affine        # np.ndarray  (4, 4)
 data.case_id       # str

@@ -25,7 +25,10 @@ When `snr` is set, Rician noise is added:
 S_noisy = sqrt( (S + N_re)² + N_im² )
 ```
 
-where `N_re, N_im ~ Normal(0, σ)` and `σ = max(S0) / snr`.
+where `N_re, N_im ~ Normal(0, σ)` and:
+
+- By default: `σ = max(S0) / snr` across all regions.
+- With `snr_region` set: `σ = S0_of_named_region / snr`, pinning the noise reference to a specific tissue type.
 
 Set `snr=None` (the default) for noise-free output.
 
@@ -37,7 +40,7 @@ Files written by `DWIPhantom.save("phantom.h5")` or `mrphantom synth --out phant
 
 ```
 /signal          float64  (X, Y, Z, n_bvalues)   gzip-compressed
-/bvalues         float64  (n_bvalues,)
+/volumes         float64  (n_bvalues,)
 /segmentation    int32    (X, Y, Z)               gzip-compressed
 /affine          float64  (4, 4)
 
@@ -56,7 +59,7 @@ from mrphantom import load_hdf5
 data = load_hdf5("phantom.h5")
 
 data.signal        # np.ndarray  (X, Y, Z, n_bvalues)
-data.bvalues       # np.ndarray  (n_bvalues,)
+data.volumes       # np.ndarray  (n_bvalues,)
 data.segmentation  # np.ndarray  (X, Y, Z) — integer label map
 data.affine        # np.ndarray  (4, 4)
 data.case_id       # str
