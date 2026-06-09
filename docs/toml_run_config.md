@@ -35,6 +35,7 @@ bvals  = "assets/kidney/case_002/bvals.txt"
 |---|---|---|---|
 | `snr` | float | `null` | Signal-to-noise ratio for Rician noise. Omit or set to `null` for noise-free output. |
 | `seed` | int | `null` | Random seed for reproducible noise. Ignored when `snr` is absent. |
+| `snr_region` | string | `null` | Name of the region whose S0 is used as the noise reference. Uses `max(S0)` across all regions when absent. |
 
 ### `[export]`
 
@@ -85,13 +86,13 @@ mrphantom run experiment.toml
 Equivalent programmatic usage:
 
 ```python
-from mrphantom import load_run_config, load_phantom_config, DWIPhantom
+from mrphantom import load_run_config, load_dwi_config, DWIPhantom
 
 run = load_run_config("experiment.toml")
 phantom = DWIPhantom(snr=run.snr, seed=run.seed)
 
 for entry in run.cases:
-    cfg = load_phantom_config(entry.config, entry.bvals)
+    cfg = load_dwi_config(entry.config, entry.bvals)
     out_paths = run.export.resolve_paths(cfg.case_id)
     phantom.load_case(cfg).synthesize().save(*out_paths)
 ```

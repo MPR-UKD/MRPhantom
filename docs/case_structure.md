@@ -107,7 +107,7 @@ Regions where parameters are unknown or irrelevant can be left as null. They aut
 }
 ```
 
-A region is treated as null when `S0` is `null` **or** `D` is an empty list. If any null region is present, a `"remaining_tissue"` region must exist in the same JSON — otherwise `load_phantom_config()` raises a `ValueError`.
+A region is treated as null when `S0` is `null` **or** `D` is an empty list. If any null region is present, a `"remaining_tissue"` region must exist in the same JSON — otherwise `load_dwi_config()` raises a `ValueError`.
 
 ---
 
@@ -152,9 +152,9 @@ The bundled example case is at `assets/kidney/case_000/`. Load it with:
 
 ```python
 from pathlib import Path
-from mrphantom import load_phantom_config
+from mrphantom import load_dwi_config
 
-config = load_phantom_config(
+config = load_dwi_config(
     Path("assets/kidney/case_000/kid_000_synthetic.json"),
     Path("assets/kidney/case_000/kidney.bval"),
 )

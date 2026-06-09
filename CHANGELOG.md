@@ -6,6 +6,61 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.0] — 2026-06-09
+
+### Added
+
+- Ground-truth (noise-free) signal storage throughout the pipeline: `synthesize_phantom()` returns `signal_gt` as a third element; `PhantomData.signal_gt` field; HDF5 round-trip preserves `signal_gt`; old HDF5 files load with `signal_gt=None` (backward compatible).
+- `DWIPhantom._run_synthesis(rng, config=None)` extracted as a protected method. `synthesize()` delegates to it — zero behaviour change for existing callers.
+- Full Monte Carlo subpackage (`mrphantom.montecarlo`):
+  - `ParamDist`, `RegionMCConfig`, `MCRunConfig` config dataclasses with TOML loader (`load_montecarlo_config`).
+  - `SampledParams`, `sample_region_params` — parameter sampling from normal, lognormal, and Dirichlet distributions (using NumPy, no SciPy dependency).
+  - `MCResult`, `run_montecarlo` — functional MC runner with two-stream RNG (parameter + independent noise seeds per sample).
+  - `MCPhantomData`, `save_mc_hdf5`, `load_mc_hdf5` — 5-D HDF5 I/O with `/sampled_params/` group.
+- `MCDWIPhantom(DWIPhantom)` — class-centred Monte Carlo API with `setup()` step, batch mode `synthesize()` (5-D output), lazy per-sample `step(i)`, and incremental `open_h5()` writing via `_H5Writer`.
+- `MCDWIPhantom.from_toml(path)` classmethod factory.
+- CLI `mrphantom montecarlo` command.
+- `assets/kidney/mc.toml` — ready-to-run MC example with 5 randomised regions.
+- Dirichlet fraction sampling simplified: specify a scalar `kappa` (concentration) instead of a manual `alpha` vector. The Dirichlet alpha is computed as `base_fractions * kappa`, so the mean is always anchored to the base config values.
+- Normal and lognormal sampling simplified for S0 and D: the mean is auto-anchored to the base config value — only spread parameters (`std` / `sigma`) need to be specified. `mean` field on `ParamDist` is no longer required (ignored at sampling time).
+- New Monte Carlo concepts guide (`docs/concepts/monte-carlo.md`) explaining parameter sampling, Dirichlet distributions, two-stream RNG design, and batch vs lazy synthesis modes.
+
+### Changed
+
+- `_build_sample_config` moved from `runner.py` to `sampler.py` (no duplicate).
+- Module exports updated: `mrphantom/__init__.py`, `mrphantom/montecarlo/__init__.py` now export `MCDWIPhantom`.
+- Removed vestigial `TYPE_CHECKING: pass` block from `montecarlo/phantom.py`.
+
+### Fixed
+
+- `n_samples=0` now raises `ValueError` in `run_montecarlo` and `MCRunConfig` instead of crashing with an index error.
+- `snr=0` now raises `ValueError` in `synthesize_phantom` instead of producing infinite noise.
+- Lognormal sampling with `base_value <= 0` now raises `ValueError` instead of silently producing NaN.
+- Empty region configs, negative S0/D/b-values, fractions not summing to 1, and duplicate region names are now rejected at config load time.
+- HDF5 save now warns when overwriting an existing file.
+- Liver fractions in bundled kidney asset corrected to sum to 1.
+- CLI `montecarlo --help` example no longer shows the obsolete `mean` parameter.
+- Updated all doc files to reflect current API names (`load_phantom_config` → `load_dwi_config`, `PhantomConfig` → `DWIConfig`, `/bvalues` → `/volumes`, `data.bvalues` → `data.volumes`).
+
+### Added tests
+
+- `test_mc_phantom.py` — 80 tests covering full `MCDWIPhantom` lifecycle (init, load_case, setup, synthesize, step, save, open_h5, get_params, from_toml, full chains).
+- `test_montecarlo_config.py` — TOML parsing, ParamDist/RegionMCConfig dataclasses.
+- `test_montecarlo_sampler.py` — scalar + Dirichlet sampling, reproducibility, validation.
+- `test_montecarlo_runner.py` — `run_montecarlo` shape, noise, reproducibility, parameter randomisation.
+- `test_mc_io.py` — `save_mc_hdf5` / `load_mc_hdf5` round-trip for all fields.
+- `test_mc_cli.py` — `mrphantom montecarlo` CLI integration.
+- New mean-anchoring tests for `_sample_dirichlet` and `sample_region_params` fractions.
+
+### Documentation
+
+- Full documentation: Monte Carlo TOML config guide (`docs/toml_mc_config.md`), MC phantom walkthrough in Usage Guide, API Reference updates.
+- `snr_region` parameter documented in `reference.md`, `toml_run_config.md`, and `usage.md`.
+- Added `montecarlo` CLI command to README feature list.
+- Added TOML Monte Carlo Config and Monte Carlo Concepts to README and docs index tables.
+
+---
+
 ## [0.3.0] — 2026-05-04
 
 ### Breaking changes

@@ -1,6 +1,6 @@
 # API Reference
 
-> **TL;DR** — All public symbols exported from `mrphantom`. Covers the abstract base class (**Base class**), the concrete DWI synthesizer (**Phantom classes**), DWI config and data model types (**DWI config / data model**), TOML batch config types (**Run config**), the low-level functional API (**Synthesis**), ROI helpers (**ROI helpers**), and I/O functions (**I/O**).
+> **TL;DR** — All public symbols exported from `mrphantom`. Covers the abstract base class (**Base class**), the concrete DWI synthesizer (**Phantom classes**), DWI config and data model types (**DWI config / data model**), TOML batch config types (**Run config**), the low-level functional API (**Synthesis**), ROI helpers (**ROI helpers**), I/O functions (**I/O**), and the full Monte Carlo API (**Monte Carlo**).
 
 ---
 
@@ -20,11 +20,15 @@ See [`base.py`](../mrphantom/base.py).
 
 ```python
 from mrphantom import DWIPhantom
+from mrphantom import MCDWIPhantom
 ```
 
-Concrete synthesizer for diffusion-weighted phantoms. Implements the multi-exponential signal model with optional Rician noise.
+| Symbol | Description |
+|---|---|
+| `DWIPhantom` | Concrete synthesizer for diffusion-weighted phantoms. Implements the multi-exponential signal model with optional Rician noise. |
+| `MCDWIPhantom` | Monte Carlo extension of `DWIPhantom`. Adds a `setup()` step, batch `synthesize()` (5-D output), lazy per-sample `step(i)`, and incremental `open_h5()` writing. |
 
-See [`dwi/phantom.py`](../mrphantom/dwi/phantom.py) and the [Usage guide](usage.md).
+See [`dwi/phantom.py`](../mrphantom/dwi/phantom.py), [`montecarlo/phantom.py`](../mrphantom/montecarlo/phantom.py), and the [Usage guide](usage.md).
 
 ---
 
@@ -107,3 +111,68 @@ from mrphantom import save_nifti, save_hdf5, load_hdf5, PhantomData
 | `PhantomData` | Dataclass bundling all arrays and metadata loaded from HDF5, with `as_nifti()`. The `volumes` field stores the acquisition-parameter axis (b-values for DWI, TIs for T1, etc.). |
 
 See [`io/`](../mrphantom/io/) and the [Usage guide — Reading back saved files](usage.md#reading-back-saved-files).
+
+---
+
+## Monte Carlo
+
+### Phantom class
+
+```python
+from mrphantom import MCDWIPhantom
+```
+
+| Symbol | Description |
+|---|---|
+| `MCDWIPhantom(n_samples, mc_regions, snr, seed, snr_region)` | Class-centred Monte Carlo phantom. Lifecycle: `load_case()` → `setup()` → `synthesize()` + `save()` (batch) or `open_h5()` + `step(i)` + `flush(i)` (lazy). |
+| `MCDWIPhantom.from_toml(path)` | Classmethod factory. Reads an MC TOML config; returns a configured instance with `_mc_config` attached. |
+
+See [`montecarlo/phantom.py`](../mrphantom/montecarlo/phantom.py) and the [Usage guide — Monte Carlo](usage.md#monte-carlo-simulation-mcdwiphantom).
+
+---
+
+### Config
+
+```python
+from mrphantom import ParamDist, RegionMCConfig, MCRunConfig, load_montecarlo_config
+```
+
+| Symbol | Description |
+|---|---|
+| `ParamDist` | Dataclass holding a distribution specification (`dist`, `mean`, `std`, `sigma`, `alpha`, `kappa`). For `"normal"` and `"lognormal"` distributions, the mean is auto-anchored to the base config value — only spread parameters (`std` / `sigma`) are used at sampling time. For `"dirichlet"` on fractions, use `kappa` (scalar concentration) — the alpha vector is computed as `base_fractions * kappa`. |
+| `RegionMCConfig` | Dataclass holding per-region MC distributions (`name`, `S0`, `D`, `fractions`). |
+| `MCRunConfig` | Top-level dataclass for a Monte Carlo run (`snr`, `snr_region`, `seed`, `export`, `cases`, `n_samples`, `mc_regions`). |
+| `load_montecarlo_config(toml_path)` | Parse a Monte Carlo TOML config file into an `MCRunConfig`. |
+
+See [`montecarlo/config.py`](../mrphantom/montecarlo/config.py) and the [TOML Monte Carlo config guide](toml_mc_config.md).
+
+---
+
+### Runner
+
+```python
+from mrphantom import run_montecarlo, MCResult
+```
+
+| Symbol | Description |
+|---|---|
+| `run_montecarlo(base_config, mc_regions, n_samples, snr, snr_region, seed)` | Run *n_samples* Monte Carlo DWI simulations. Returns an `MCResult`. |
+| `MCResult` | Dataclass with `signal` and `signal_gt` arrays of shape `(X, Y, Z, n_b, N)`, `sampled_params`, and `affine`. |
+
+See [`montecarlo/runner.py`](../mrphantom/montecarlo/runner.py).
+
+---
+
+### Monte Carlo I/O
+
+```python
+from mrphantom import save_mc_hdf5, load_mc_hdf5, MCPhantomData
+```
+
+| Symbol | Description |
+|---|---|
+| `save_mc_hdf5(signal, signal_gt, volumes, segmentation, affine, S0_samples, D_samples, fractions_samples, region_names, out_path, ...)` | Write a 5-D Monte Carlo result to HDF5. |
+| `load_mc_hdf5(path)` | Read a Monte Carlo HDF5 file into an `MCPhantomData` dataclass. |
+| `MCPhantomData` | Dataclass bundling all arrays and metadata from a Monte Carlo HDF5 file (`signal`, `signal_gt`, `volumes`, `segmentation`, `affine`, `S0_samples`, `D_samples`, `fractions_samples`, `region_names`, and metadata). |
+
+See [`io/mc_hdf5.py`](../mrphantom/io/mc_hdf5.py) and the [Reference — Monte Carlo HDF5 schema](reference.md#monte-carlo-hdf5-schema).

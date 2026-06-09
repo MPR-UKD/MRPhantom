@@ -32,11 +32,15 @@ def _load_bvalues(bval_path: Path) -> np.ndarray:
 
     Raises:
         FileNotFoundError: If the file does not exist.
-        ValueError: If the file contains no numeric values.
+        ValueError: If the file contains no numeric values or negative values.
     """
     values = np.loadtxt(bval_path, dtype=np.float64).ravel()
     if values.size == 0:
         raise ValueError(f"B-values file is empty: {bval_path}")
+    if np.any(values < 0):
+        raise ValueError(
+            f"B-values must be non-negative, got negative values in {bval_path}"
+        )
     return values
 
 
@@ -178,6 +182,7 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
     # Second pass: resolve null regions
     # ------------------------------------------------------------------
     regions: dict[int, RegionConfig] = {}
+    seen_names: set[str] = set()
     for region in raw_regions:
         if region.index in null_indices and remaining is not None:
             region = RegionConfig(
@@ -188,7 +193,33 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
                 fractions=list(remaining.fractions),
                 D=list(remaining.D),
             )
+
+        if region.S0 < 0:
+            raise ValueError(
+                f"Region {region.name!r} has negative S0 ({region.S0})."
+            )
+        if any(d < 0 for d in region.D):
+            raise ValueError(
+                f"Region {region.name!r} has negative diffusivity values."
+            )
+        if not np.isclose(sum(region.fractions), 1.0):
+            raise ValueError(
+                f"Region {region.name!r} fractions sum to "
+                f"{sum(region.fractions):.4f}, expected 1.0."
+            )
+        if region.name in seen_names:
+            raise ValueError(
+                f"Duplicate region name {region.name!r}. "
+                "Region names must be unique."
+            )
+        seen_names.add(region.name)
         regions[region.index] = region
+
+    if not regions:
+        raise ValueError(
+            "Phantom JSON must contain at least one region "
+            "(non-null after null-region resolution)."
+        )
 
     return DWIConfig(
         case_id=data["case_id"],
