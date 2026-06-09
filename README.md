@@ -17,7 +17,7 @@ MRPhantom generates controlled, ground-truth DWI data from NIfTI segmentation ma
 - Class-based API (`DWIPhantom`) with method chaining
 - TOML-driven batch synthesis across multiple cases
 - Export to NIfTI (`.nii.gz`) and HDF5 (`.h5`) in a single pass
-- CLI with `synth`, `run`, `info`, and `inspect` commands
+- CLI with `synth`, `run`, `info`, `inspect`, and `montecarlo` commands
 - Fully functional API preserved alongside the class API
 
 ---
@@ -69,10 +69,12 @@ mrphantom run experiment.toml
 ## Documentation
 
 | Page | Description |
-|---|---|
+|---|---|---|
 | [Usage Guide](docs/usage.md) | Walkthrough: single-case, batch, method chaining, params, ROI helpers |
 | [Case Structure](docs/case_structure.md) | Directory layout, JSON schema, NIfTI conventions, b-values format |
 | [TOML Run Config](docs/toml_run_config.md) | TOML schema for batch synthesis, field reference, path resolution |
+| [TOML Monte Carlo Config](docs/toml_mc_config.md) | TOML schema for Monte Carlo simulation, distribution types, output format |
+| [Monte Carlo Concepts](docs/concepts/monte-carlo.md) | Background: parameter sampling, Dirichlet, RNG design, batch vs lazy |
 | [API Reference](docs/api.md) | All public classes, functions, and constants |
 | [Reference](docs/reference.md) | Signal model formulation and HDF5 file schema |
 

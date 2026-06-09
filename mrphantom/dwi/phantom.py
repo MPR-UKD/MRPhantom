@@ -167,10 +167,33 @@ class DWIPhantom(MRPhantom):
         if self.snr is not None:
             rng = np.random.default_rng(self.seed)
 
-        self._signal, self._signal_gt, self._signal_img = synthesize_phantom(
-            self._config, snr=self.snr, rng=rng, snr_region=self.snr_region
-        )
+        self._run_synthesis(rng)
         return self
+
+    def _run_synthesis(
+        self,
+        rng: "np.random.Generator | None",
+        config: "DWIConfig | None" = None,
+    ) -> None:
+        """Run synthesis and store signal, GT, and image on the instance.
+
+        This internal helper is extracted so that subclasses (e.g.
+        :class:`~mrphantom.montecarlo.phantom.MCDWIPhantom`) can reuse the
+        synthesis logic with a pre-seeded per-sample RNG and a per-sample
+        config without duplicating the call site.
+
+        Args:
+            rng:    Pre-seeded :class:`numpy.random.Generator` for Rician
+                    noise, or ``None`` for a noise-free run.  Passed directly
+                    to :func:`~mrphantom.dwi.synthesis.synthesize_phantom`.
+            config: :class:`~mrphantom.dwi.config.DWIConfig` to synthesize.
+                    Defaults to :attr:`_config` when ``None``.
+        """
+        if config is None:
+            config = self._config
+        self._signal, self._signal_gt, self._signal_img = synthesize_phantom(
+            config, snr=self.snr, rng=rng, snr_region=self.snr_region
+        )
 
     # ------------------------------------------------------------------
     # Introspection — extend base with snr_region

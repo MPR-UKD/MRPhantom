@@ -1,0 +1,60 @@
+[run]
+snr        = 30.0
+snr_region = "cortex"   # region whose S0 sets the noise floor
+seed       = 42
+
+[montecarlo]
+n_samples = 50
+
+# --- Kidney evaluation regions (3-compartment IVIM model) -----------------
+
+[[montecarlo.regions]]
+name      = "cortex"
+S0        = {dist = "normal",    std  = 15.0}
+D         = [{dist = "lognormal", sigma = 0.10},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
+fractions = {dist = "dirichlet", kappa = 10.0}
+
+[[montecarlo.regions]]
+name      = "medulla"
+S0        = {dist = "normal",    std  = 12.0}
+D         = [{dist = "lognormal", sigma = 0.10},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
+fractions = {dist = "dirichlet", kappa = 10.0}
+
+[[montecarlo.regions]]
+name      = "hilum"
+S0        = {dist = "normal",    std  = 20.0}
+D         = [{dist = "lognormal", sigma = 0.12},
+             {dist = "lognormal", sigma = 0.15},
+             {dist = "lognormal", sigma = 0.20}]
+fractions = {dist = "dirichlet", kappa = 10.0}
+
+# --- Supporting regions (1-compartment) -----------------------------------
+
+[[montecarlo.regions]]
+name = "spleen"
+S0   = {dist = "normal",    std   = 8.0}
+D    = [{dist = "lognormal", sigma = 0.10}]
+
+[[montecarlo.regions]]
+name = "liver"
+S0   = {dist = "normal",    std   = 5.0}
+D    = [{dist = "lognormal", sigma = 0.10},
+        {dist = "lognormal", sigma = 0.15},
+        {dist = "lognormal", sigma = 0.20}]
+fractions = {dist = "dirichlet", kappa = 10.0}
+
+# Regions without explicit distributions use their base-config values
+# unchanged across all samples (bones is skipped — null S0 in the JSON).
+
+[export]
+output_dir        = "output/"
+filename_template = "{case_id}_mc"
+formats           = ["hdf5"]           # 5-D arrays — NIfTI not applicable
+
+[[cases]]
+config = "case_000/kid_000_synthetic.json"
+bvals  = "case_000/kidney.bval"

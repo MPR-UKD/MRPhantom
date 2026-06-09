@@ -21,7 +21,18 @@ from .dwi import (
     load_dwi_config,
     synthesize_phantom,
 )
-from .io import PhantomData, load_hdf5, save_hdf5, save_nifti
+from .io import MCPhantomData, PhantomData, load_hdf5, load_mc_hdf5, save_hdf5, save_mc_hdf5, save_nifti
+from .montecarlo import (
+    MCDWIPhantom,
+    MCResult,
+    MCRunConfig,
+    ParamDist,
+    RegionMCConfig,
+    SampledParams,
+    load_montecarlo_config,
+    run_montecarlo,
+    sample_region_params,
+)
 from .roi import get_fitting_mask
 from .run_config import CaseEntry, ExportConfig, RunConfig, load_run_config
 
@@ -51,4 +62,17 @@ __all__ = [
     "save_hdf5",
     "load_hdf5",
     "PhantomData",
+    "save_mc_hdf5",
+    "load_mc_hdf5",
+    "MCPhantomData",
+    # montecarlo
+    "ParamDist",
+    "RegionMCConfig",
+    "MCRunConfig",
+    "load_montecarlo_config",
+    "SampledParams",
+    "sample_region_params",
+    "MCResult",
+    "run_montecarlo",
+    "MCDWIPhantom",
 ]

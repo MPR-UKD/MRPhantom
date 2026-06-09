@@ -31,6 +31,7 @@ dataclass that bundles all arrays and metadata.
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -147,6 +148,9 @@ def save_hdf5(
         out_path = out_path.with_suffix(".h5")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if out_path.exists():
+        warnings.warn(f"Overwriting existing file: {out_path}")
 
     # Resolve segmentation — accept either an array or a path to a NIfTI file.
     if isinstance(segmentation, (str, Path)):
