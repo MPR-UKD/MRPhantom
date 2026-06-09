@@ -46,10 +46,6 @@ from ..io.mc_hdf5 import save_mc_hdf5
 from .config import MCRunConfig, RegionMCConfig, load_montecarlo_config
 from .sampler import SampledParams, _build_sample_config, sample_region_params
 
-if TYPE_CHECKING:
-    pass
-
-
 # ---------------------------------------------------------------------------
 # HDF5 incremental writer (private)
 # ---------------------------------------------------------------------------

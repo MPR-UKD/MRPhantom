@@ -283,7 +283,7 @@ def montecarlo(toml_file: Path) -> None:
 
         [[montecarlo.regions]]
         name      = "cortex"
-        S0        = {dist = "normal", mean = 180.0, std = 10.0}
+        S0        = {dist = "normal", std = 10.0}
 
         [export]
         output_dir        = "output/"
