@@ -17,7 +17,7 @@ MRPhantom generates controlled, ground-truth DWI data from NIfTI segmentation ma
 - Class-based API (`DWIPhantom`) with method chaining
 - TOML-driven batch synthesis across multiple cases
 - Export to NIfTI (`.nii.gz`) and HDF5 (`.h5`) in a single pass
-- CLI with `synth`, `run`, `info`, and `inspect` commands
+- CLI with `synth`, `run`, `info`, `inspect`, and `montecarlo` commands
 - Fully functional API preserved alongside the class API
 
 ---
