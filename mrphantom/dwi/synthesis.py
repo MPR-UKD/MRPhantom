@@ -98,6 +98,8 @@ def synthesize_phantom(
     signal_gt = signal.copy()
 
     if snr is not None:
+        if snr <= 0:
+            raise ValueError(f"snr must be > 0, got {snr}")
         if rng is None:
             rng = np.random.default_rng()
         if snr_region is not None:

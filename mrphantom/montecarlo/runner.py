@@ -101,6 +101,9 @@ def run_montecarlo(
         ValueError: If a D distribution list or Dirichlet alpha length does
             not match ``n_components`` for its region.
     """
+    if n_samples < 1:
+        raise ValueError(f"n_samples must be >= 1, got {n_samples}")
+
     # ------------------------------------------------------------------
     # Derive two independent RNG streams from master seed
     # ------------------------------------------------------------------

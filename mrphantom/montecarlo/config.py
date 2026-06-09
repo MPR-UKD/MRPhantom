@@ -287,6 +287,10 @@ def load_montecarlo_config(toml_path: Path | str) -> MCRunConfig:
     # ---------------------------------------------------------- [montecarlo]
     mc_section: dict = data.get("montecarlo", {})
     n_samples: int = int(mc_section.get("n_samples", 100))
+    if n_samples < 1:
+        raise ValueError(
+            f"n_samples must be >= 1, got {n_samples} in {toml_path}"
+        )
 
     raw_mc_regions: list[dict] = mc_section.get("regions", [])
     mc_regions: dict[str, RegionMCConfig] = {}

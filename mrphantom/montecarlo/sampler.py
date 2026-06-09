@@ -86,6 +86,10 @@ def _sample_scalar(
     if dist.dist == "normal":
         return rng.normal(base_value, dist.std, size=n).astype(np.float64)
     elif dist.dist == "lognormal":
+        if base_value <= 0:
+            raise ValueError(
+                f"lognormal requires base_value > 0, got {base_value}"
+            )
         return rng.lognormal(
             mean=np.log(base_value), sigma=dist.sigma, size=n
         ).astype(np.float64)
