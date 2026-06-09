@@ -69,7 +69,7 @@ mrphantom run experiment.toml
 ## Documentation
 
 | Page | Description |
-|---|---|---|
+|---|---|
 | [Usage Guide](docs/usage.md) | Walkthrough: single-case, batch, method chaining, params, ROI helpers |
 | [Case Structure](docs/case_structure.md) | Directory layout, JSON schema, NIfTI conventions, b-values format |
 | [TOML Run Config](docs/toml_run_config.md) | TOML schema for batch synthesis, field reference, path resolution |

@@ -7,7 +7,7 @@
 ## Contents
 
 | Page | Description |
-|---|---|---|
+|---|---|
 | [API Reference](api.md) | Complete public API — all classes, functions, and constants |
 | [Usage Guide](usage.md) | Walkthrough: single-case, batch, method chaining, params, ROI helpers |
 | [Case Structure](case_structure.md) | Case directory layout, JSON schema, NIfTI conventions, b-values format |
