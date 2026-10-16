@@ -37,8 +37,8 @@ pip install mrphantom tomli   # Python 3.9 / 3.10
 ### Development install
 
 ```bash
-git clone https://github.com/darksim33/mrphantom
-cd mrphantom
+git clone https://github.com/darksim33/MRPhantom
+cd MRPhantom
 pip install -e .
 ```
 
@@ -82,4 +82,4 @@ mrphantom run experiment.toml
 
 ## License
 
-See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
