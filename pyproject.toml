@@ -3,6 +3,16 @@ name = "mrphantom"
 version = "0.4.0"
 description = "Synthetic MRI diffusion-weighted phantom synthesis library and CLI"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Thomas Thiel" }]
+keywords = ["mri", "dwi", "diffusion", "phantom", "synthetic", "intravoxel-incoherent-motion", "monte-carlo"]
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Intended Audience :: Science/Research",
+	"Programming Language :: Python :: 3",
+	"Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
 requires-python = ">=3.9"
 dependencies = [
 	"click>=8.1",
@@ -11,6 +21,11 @@ dependencies = [
 	"h5py>=3.10.0",
 	"tomli>=1.2; python_version < '3.11'",
 ]
+
+[project.urls]
+Homepage = "https://github.com/darksim33/MRPhantom"
+Issues = "https://github.com/darksim33/MRPhantom/issues"
+Changelog = "https://github.com/darksim33/MRPhantom/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mrphantom="mrphantom.cli:main"
