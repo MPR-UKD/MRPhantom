@@ -25,19 +25,19 @@ MRPhantom generates controlled, ground-truth DWI data from NIfTI segmentation ma
 ## Installation
 
 ```bash
-pip install git+https://github.com/MRP-UKD/MRPhantom
+pip install git+https://github.com/MPR-UKD/MRPhantom
 ```
 
 Python 3.9 or later is required. On Python < 3.11 the `tomli` package is also needed for TOML support:
 
 ```bash
-pip install git+https://github.com/MRP-UKD/MRPhantom tomli   # Python 3.9 / 3.10
+pip install git+https://github.com/MPR-UKD/MRPhantom tomli   # Python 3.9 / 3.10
 ```
 
 ### Development install
 
 ```bash
-git clone https://github.com/MRP-UKD/MRPhantom
+git clone https://github.com/MPR-UKD/MRPhantom
 cd MRPhantom
 pip install -e .
 ```
