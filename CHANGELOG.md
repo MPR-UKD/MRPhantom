@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.4.1] — 2026-10-19
+
+### Changed
+
+- Project is now hosted at `github.com/MPR-UKD/MRPhantom`; README and project URLs updated.
+- README documents installation via `pip install git+https://github.com/MPR-UKD/MRPhantom` (not published on PyPI).
+- `pyproject.toml` gains package metadata: license (MIT), authors, keywords, classifiers, project URLs.
+- Updated logo.
+
+### Removed
+
+- Internal AI-agent guidance files (`.github/skills/`) are no longer tracked.
+
+No code or API changes.
+
+---
+
 ## [0.4.0] — 2026-06-09
 
 ### Added

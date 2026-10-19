@@ -1,6 +1,6 @@
 [project]
 name = "mrphantom"
-version = "0.4.0"
+version = "0.4.1"
 description = "Synthetic MRI diffusion-weighted phantom synthesis library and CLI"
 readme = "README.md"
 license = "MIT"
