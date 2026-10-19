@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "MRPhantom"
+abstract: "Synthetic MRI diffusion-weighted phantom synthesis library and CLI"
+version: 0.4.1
+date-released: 2026-10-19
+license: MIT
+repository-code: "https://github.com/MPR-UKD/MRPhantom"
+url: "https://github.com/MPR-UKD/MRPhantom"
+keywords:
+  - mri
+  - dwi
+  - diffusion
+  - phantom
+  - synthetic
+  - intravoxel-incoherent-motion
+  - monte-carlo
+authors:
+  - family-names: Thiel
+    given-names: Thomas
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
