@@ -23,9 +23,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/darksim33/MRPhantom"
-Issues = "https://github.com/darksim33/MRPhantom/issues"
-Changelog = "https://github.com/darksim33/MRPhantom/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/MRP-UKD/MRPhantom"
+Issues = "https://github.com/MRP-UKD/MRPhantom/issues"
+Changelog = "https://github.com/MRP-UKD/MRPhantom/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mrphantom="mrphantom.cli:main"
