@@ -270,6 +270,11 @@ def _build_sample_config(
     """
     new_regions: dict[int, RegionConfig] = {}
     for region_idx, region in base_config.regions.items():
+        if region.tensor is not None:
+            raise NotImplementedError(
+                "Monte Carlo sampling does not support tensor regions "
+                f"({region.name!r})."
+            )
         try:
             arr_idx = sampled.region_names.index(region.name)
         except ValueError:
@@ -301,4 +306,5 @@ def _build_sample_config(
         image_dims=base_config.image_dims,
         bvalues=base_config.bvalues,
         regions=new_regions,
+        bvecs=base_config.bvecs,
     )

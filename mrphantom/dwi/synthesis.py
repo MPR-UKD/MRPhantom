@@ -29,7 +29,9 @@ def synthesize_phantom(
         S(b) = S0 * Σ_i ( f_i * exp(-b * D_i) )
 
     is evaluated at every b-value and written into all voxels belonging to that
-    segment.
+    segment.  Regions with a diffusion ``tensor`` instead use the
+    single-compartment model ``S(b, g) = S0 * exp(-b * g^T D g)`` with the
+    gradient directions ``config.bvecs``.
 
     If *snr* is given, Rician noise is added::
 
@@ -86,10 +88,21 @@ def synthesize_phantom(
         if not np.any(mask):
             continue
 
-        # Evaluate multi-exponential model: shape (n_b,)
-        region_signal: np.ndarray = region.S0 * sum(
-            f * np.exp(-config.bvalues * d) for f, d in zip(region.fractions, region.D)
-        )
+        if region.tensor is not None:
+            # Single-compartment tensor model: S0 * exp(-b g^T D g), shape (n_b,)
+            if config.bvecs is None:
+                raise ValueError(
+                    f"Region {region.name!r} defines a diffusion tensor but the "
+                    "config has no bvecs; pass bvec_path to load_dwi_config."
+                )
+            adc = np.einsum("ni,ij,nj->n", config.bvecs, region.tensor, config.bvecs)
+            region_signal: np.ndarray = region.S0 * np.exp(-config.bvalues * adc)
+        else:
+            # Evaluate multi-exponential model: shape (n_b,)
+            region_signal = region.S0 * sum(
+                f * np.exp(-config.bvalues * d)
+                for f, d in zip(region.fractions, region.D)
+            )
 
         # Assign to all voxels belonging to this region: (N_vox, n_b)
         signal[mask] = region_signal
