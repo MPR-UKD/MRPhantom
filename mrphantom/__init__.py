@@ -18,9 +18,12 @@ from .dwi import (
     EVALUATION_REGION_NAMES,
     RegionConfig,
     get_evaluation_segments,
+    SynthesisResult,
     load_dwi_config,
+    synthesize_dwi,
     synthesize_phantom,
 )
+from .motion import MotionConfig, apply_motion, sample_motion
 from .io import MCPhantomData, PhantomData, load_hdf5, load_mc_hdf5, save_hdf5, save_mc_hdf5, save_nifti
 from .montecarlo import (
     MCDWIPhantom,
@@ -52,6 +55,12 @@ __all__ = [
     "load_run_config",
     # synthesis (functional API)
     "synthesize_phantom",
+    "synthesize_dwi",
+    "SynthesisResult",
+    # motion
+    "MotionConfig",
+    "sample_motion",
+    "apply_motion",
     # roi — general
     "get_fitting_mask",
     # roi — dwi / kidney
