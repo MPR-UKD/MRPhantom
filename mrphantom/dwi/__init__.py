@@ -15,7 +15,7 @@ Submodules
 from .config import DWIConfig, RegionConfig, load_dwi_config
 from .phantom import DWIPhantom
 from .roi import EVALUATION_REGION_NAMES, get_evaluation_segments
-from .synthesis import synthesize_phantom
+from .synthesis import SynthesisResult, synthesize_dwi, synthesize_phantom
 
 __all__ = [
     "DWIPhantom",
@@ -23,6 +23,8 @@ __all__ = [
     "RegionConfig",
     "load_dwi_config",
     "synthesize_phantom",
+    "synthesize_dwi",
+    "SynthesisResult",
     "EVALUATION_REGION_NAMES",
     "get_evaluation_segments",
 ]

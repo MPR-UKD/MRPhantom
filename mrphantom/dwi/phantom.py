@@ -42,8 +42,9 @@ import numpy as np
 
 from ..base import MRPhantom
 from ..io import save_hdf5, save_nifti
+from ..motion import MotionConfig
 from .config import DWIConfig, load_dwi_config
-from .synthesis import synthesize_phantom
+from .synthesis import synthesize_dwi
 
 
 class DWIPhantom(MRPhantom):
@@ -57,6 +58,9 @@ class DWIPhantom(MRPhantom):
         snr_region: Name of the region whose S0 is used as the noise reference
             when computing σ.  ``None`` (default) uses ``max(S0)`` across all
             regions.  Ignored when ``snr`` is ``None``.
+        motion: Optional :class:`~mrphantom.motion.MotionConfig`.  When given,
+            every volume is rigidly moved before noise is added; see
+            :attr:`motion_matrices` and :attr:`signal_moved_gt`.
 
     Examples:
         >>> phantom = DWIPhantom(snr=30, seed=42)
@@ -73,10 +77,14 @@ class DWIPhantom(MRPhantom):
         snr: float | None = None,
         seed: int | None = None,
         snr_region: str | None = None,
+        motion: MotionConfig | None = None,
     ) -> None:
         """Initialise with acquisition parameters only; no case data loaded yet."""
         super().__init__(snr=snr, seed=seed)
         self.snr_region = snr_region
+        self.motion = motion
+        self._motion_matrices: np.ndarray | None = None
+        self._signal_moved_gt: np.ndarray | None = None
         self._config: DWIConfig | None = None
         self._signal: np.ndarray | None = None
         self._signal_gt: np.ndarray | None = None
@@ -141,6 +149,8 @@ class DWIPhantom(MRPhantom):
         self._signal = None
         self._signal_gt = None
         self._signal_img = None
+        self._motion_matrices = None
+        self._signal_moved_gt = None
         return self
 
     def synthesize(self) -> "DWIPhantom":
@@ -191,9 +201,20 @@ class DWIPhantom(MRPhantom):
         """
         if config is None:
             config = self._config
-        self._signal, self._signal_gt, self._signal_img = synthesize_phantom(
-            config, snr=self.snr, rng=rng, snr_region=self.snr_region
+        res = synthesize_dwi(
+            config,
+            snr=self.snr,
+            rng=rng,
+            snr_region=self.snr_region,
+            motion=self.motion,
         )
+        self._signal, self._signal_gt, self._signal_img = (
+            res.signal,
+            res.signal_gt,
+            res.signal_img,
+        )
+        self._motion_matrices = res.motion_matrices
+        self._signal_moved_gt = res.signal_moved_gt
 
     # ------------------------------------------------------------------
     # Introspection — extend base with snr_region
@@ -255,7 +276,18 @@ class DWIPhantom(MRPhantom):
             suffix = "".join(out_path.suffixes).lower()
 
             if suffix.endswith(".nii") or suffix.endswith(".nii.gz"):
-                written.append(save_nifti(self._signal_img, out_path))
+                nii_path = save_nifti(self._signal_img, out_path)
+                written.append(nii_path)
+                if self._config.bvecs is not None:
+                    written.append(self._write_bvec(nii_path))
+            elif suffix.endswith(".npy"):
+                if self._motion_matrices is None:
+                    raise ValueError(
+                        "No motion matrices to save: the phantom has no motion."
+                    )
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                np.save(out_path, self._motion_matrices)
+                written.append(out_path)
             elif suffix.endswith(".h5") or suffix.endswith(".hdf5"):
                 written.append(
                     save_hdf5(
@@ -270,15 +302,26 @@ class DWIPhantom(MRPhantom):
                         snr=self.snr,
                         snr_region=self.snr_region,
                         signal_gt=self._signal_gt,
+                        motion_matrices=self._motion_matrices,
+                        signal_moved_gt=self._signal_moved_gt,
+                        bvecs=self._config.bvecs,
                     )
                 )
             else:
                 raise ValueError(
                     f"Unrecognised output format for {out_path.name!r}. "
-                    "Use .nii / .nii.gz (NIfTI) or .h5 / .hdf5 (HDF5)."
+                    "Use .nii / .nii.gz (NIfTI), .h5 / .hdf5 (HDF5) or .npy (motion matrices)."
                 )
 
         return written
+
+    def _write_bvec(self, nii_path: Path) -> Path:
+        """Write the gradient directions as an FSL ``3 x N`` ``.bvec`` next to *nii_path*."""
+        name = nii_path.name
+        stem = name[: -len(".nii.gz")] if name.endswith(".nii.gz") else name[: -len(".nii")]
+        bvec_path = nii_path.with_name(stem + ".bvec")
+        np.savetxt(bvec_path, self._config.bvecs.T, fmt="%.8f")
+        return bvec_path
 
     # ------------------------------------------------------------------
     # Read-only properties
@@ -326,6 +369,34 @@ class DWIPhantom(MRPhantom):
                 f"{type(self).__name__}.signal_gt accessed before synthesize()."
             )
         return self._signal_gt
+
+    @property
+    def motion_matrices(self) -> np.ndarray | None:
+        """``(n_volumes, 4, 4)`` pull matrices, or ``None`` without motion.
+
+        ``volume(x) = object(M x)`` in the spacing-only mm frame.
+
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
+        """
+        if self._signal is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.motion_matrices accessed before synthesize()."
+            )
+        return self._motion_matrices
+
+    @property
+    def signal_moved_gt(self) -> np.ndarray | None:
+        """Noise-free moved signal, or ``None`` without motion.
+
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
+        """
+        if self._signal is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.signal_moved_gt accessed before synthesize()."
+            )
+        return self._signal_moved_gt
 
     @property
     def signal_img(self) -> nib.Nifti1Image:
