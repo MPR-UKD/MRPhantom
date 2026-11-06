@@ -9,6 +9,9 @@ The HDF5 file written by :func:`save_hdf5` has the following layout::
     /volumes         float64  (n_volumes,)
     /segmentation    int32    (X, Y, Z)              — gzip-compressed
     /affine          float64  (4, 4)
+    /motion_matrices float64  (n_volumes, 4, 4)       — only with motion
+    /signal_moved_gt float64  (X, Y, Z, n_volumes)    — only with motion
+    /bvecs           float64  (n_volumes, 3)          — only with gradient directions
 
     Attributes on the root group:
         case_id      str
@@ -65,6 +68,9 @@ class PhantomData:
         snr:          SNR used during synthesis, or ``None`` if noise-free.
         snr_region:   Name of the region whose S0 was used as the SNR noise
                       reference, or ``None`` if ``max(S0)`` was used.
+        motion_matrices: ``(n_volumes, 4, 4)`` pull matrices, or ``None``.
+        signal_moved_gt: Noise-free moved signal, or ``None``.
+        bvecs:        ``(n_volumes, 3)`` gradient directions, or ``None``.
     """
 
     signal: np.ndarray
@@ -77,6 +83,9 @@ class PhantomData:
     description: str
     snr: float | None
     snr_region: str | None = None
+    motion_matrices: np.ndarray | None = None
+    signal_moved_gt: np.ndarray | None = None
+    bvecs: np.ndarray | None = None
 
     def as_nifti(self) -> nib.Nifti1Image:
         """Reconstruct a :class:`nibabel.Nifti1Image` from the stored arrays.
@@ -106,6 +115,9 @@ def save_hdf5(
     snr_region: str | None = None,
     signal_gt: np.ndarray | None = None,
     compression: str | None = "gzip",
+    motion_matrices: np.ndarray | None = None,
+    signal_moved_gt: np.ndarray | None = None,
+    bvecs: np.ndarray | None = None,
 ) -> Path:
     """Save a synthesized phantom to an HDF5 file.
 
@@ -135,6 +147,10 @@ def save_hdf5(
                      where signal and ground truth are identical).
         compression: HDF5 compression filter for large datasets (default
                      ``"gzip"``).  Pass ``None`` to disable.
+        motion_matrices: ``(n_volumes, 4, 4)`` pull matrices; written as
+                     ``/motion_matrices`` when given.
+        signal_moved_gt: Noise-free moved signal; written as ``/signal_moved_gt``.
+        bvecs:       ``(n_volumes, 3)`` gradient directions; written as ``/bvecs``.
 
     Returns:
         The resolved :class:`Path` of the written file.
@@ -171,6 +187,18 @@ def save_hdf5(
             f.create_dataset(
                 "signal_gt", data=signal_gt.astype(np.float64), compression=compression
             )
+        if signal_moved_gt is not None:
+            f.create_dataset(
+                "signal_moved_gt",
+                data=np.asarray(signal_moved_gt, dtype=np.float64),
+                compression=compression,
+            )
+        if motion_matrices is not None:
+            f.create_dataset(
+                "motion_matrices", data=np.asarray(motion_matrices, dtype=np.float64)
+            )
+        if bvecs is not None:
+            f.create_dataset("bvecs", data=np.asarray(bvecs, dtype=np.float64))
         f.create_dataset("volumes", data=np.asarray(volumes, dtype=np.float64))
         f.create_dataset("segmentation", data=seg_data, compression=compression)
         f.create_dataset("affine", data=signal_img.affine.astype(np.float64))
@@ -215,6 +243,9 @@ def load_hdf5(path: Path | str) -> PhantomData:
             f["signal_gt"][()] if "signal_gt" in f else None  # type: ignore[index]
         )
         volumes: np.ndarray = f["volumes"][()]  # type: ignore[index]
+        motion_matrices = f["motion_matrices"][()] if "motion_matrices" in f else None  # type: ignore[index]
+        signal_moved_gt = f["signal_moved_gt"][()] if "signal_moved_gt" in f else None  # type: ignore[index]
+        bvecs = f["bvecs"][()] if "bvecs" in f else None  # type: ignore[index]
         segmentation: np.ndarray = f["segmentation"][()]  # type: ignore[index]
         affine: np.ndarray = f["affine"][()]  # type: ignore[index]
 
@@ -237,4 +268,7 @@ def load_hdf5(path: Path | str) -> PhantomData:
         description=description,
         snr=snr,
         snr_region=snr_region,
+        motion_matrices=motion_matrices,
+        signal_moved_gt=signal_moved_gt,
+        bvecs=bvecs,
     )
