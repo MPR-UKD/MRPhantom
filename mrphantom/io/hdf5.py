@@ -9,6 +9,15 @@ The HDF5 file written by :func:`save_hdf5` has the following layout::
     /volumes         float64  (n_volumes,)
     /segmentation    int32    (X, Y, Z)              — gzip-compressed
     /affine          float64  (4, 4)
+    /params/         (optional) ground-truth parameters, region axis in
+                     ascending label order:
+        region_index int32    (n,)
+        S0           float64  (n,)
+        fractions    float64  (n, C)        — NaN-padded
+        D            float64  (n, C)        — NaN-padded, mm²/s
+        probability  float32  (n, X, Y, Z)  — partial-volume weights
+        S0_scale     float32  (n, X, Y, Z)  — only when texture is used
+        D_scale      float32  (n, X, Y, Z)  — only when texture is used
 
     Attributes on the root group:
         case_id      str
@@ -65,6 +74,8 @@ class PhantomData:
         snr:          SNR used during synthesis, or ``None`` if noise-free.
         snr_region:   Name of the region whose S0 was used as the SNR noise
                       reference, or ``None`` if ``max(S0)`` was used.
+        params:       Ground-truth parameter maps from the ``/params`` group, or
+                      ``None`` when absent (older files).
     """
 
     signal: np.ndarray
@@ -77,6 +88,7 @@ class PhantomData:
     description: str
     snr: float | None
     snr_region: str | None = None
+    params: dict[str, np.ndarray] | None = None
 
     def as_nifti(self) -> nib.Nifti1Image:
         """Reconstruct a :class:`nibabel.Nifti1Image` from the stored arrays.
@@ -105,6 +117,7 @@ def save_hdf5(
     snr: float | None = None,
     snr_region: str | None = None,
     signal_gt: np.ndarray | None = None,
+    params: dict[str, np.ndarray] | None = None,
     compression: str | None = "gzip",
 ) -> Path:
     """Save a synthesized phantom to an HDF5 file.
@@ -133,6 +146,8 @@ def save_hdf5(
                      as *signal*.  Written as ``/signal_gt`` when provided.
                      Pass ``None`` to omit (e.g. when saving noise-free phantoms
                      where signal and ground truth are identical).
+        params:      Ground-truth parameter maps written to the ``/params``
+                     group (see the module docstring).  ``None`` omits it.
         compression: HDF5 compression filter for large datasets (default
                      ``"gzip"``).  Pass ``None`` to disable.
 
@@ -174,6 +189,15 @@ def save_hdf5(
         f.create_dataset("volumes", data=np.asarray(volumes, dtype=np.float64))
         f.create_dataset("segmentation", data=seg_data, compression=compression)
         f.create_dataset("affine", data=signal_img.affine.astype(np.float64))
+
+        if params:
+            grp = f.create_group("params")
+            for key, arr in params.items():
+                arr = np.asarray(arr)
+                big = arr.ndim >= 3
+                grp.create_dataset(
+                    key, data=arr, compression=compression if big else None
+                )
 
         # Root-level metadata
         f.attrs["case_id"] = case_id
@@ -221,6 +245,9 @@ def load_hdf5(path: Path | str) -> PhantomData:
         case_id: str = str(f.attrs["case_id"])
         name: str = str(f.attrs["name"])
         description: str = str(f.attrs["description"])
+        params: dict[str, np.ndarray] | None = (
+            {k: v[()] for k, v in f["params"].items()} if "params" in f else None  # type: ignore[union-attr]
+        )
         snr: float | None = float(f.attrs["snr"]) if "snr" in f.attrs else None
         snr_region: str | None = (
             str(f.attrs["snr_region"]) if "snr_region" in f.attrs else None
@@ -237,4 +264,5 @@ def load_hdf5(path: Path | str) -> PhantomData:
         description=description,
         snr=snr,
         snr_region=snr_region,
+        params=params,
     )
