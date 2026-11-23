@@ -39,9 +39,10 @@ class SynthesisResult:
         signal: (Possibly noisy) signal, ``(X, Y, Z, n_b)``.
         signal_gt: Noise-free signal, same shape.
         signal_img: NIfTI wrapping *signal*.
-        segmentation: ``int32`` label map on the synthesised grid (argmax of the
-            region probabilities when the grid was resampled or probability
-            maps are used).
+        segmentation: ``int32`` label map on the synthesised grid: the region with
+            the highest probability, or ``0`` where the implicit background
+            ``1 - Σp`` is higher (only when the grid was resampled or probability
+            maps are used; otherwise the input labels).
         params: Ground-truth parameters, all indexed by region in ascending
             label order: ``region_index`` ``(n,)``, ``S0`` ``(n,)``,
             ``fractions`` / ``D`` ``(n, C)`` (NaN-padded), ``probability``
@@ -106,8 +107,13 @@ def _load_probabilities(
     ):
         segmentation = seg_data
     else:
+        # Dominant class per voxel, counting the implicit background 1 - Σp as a class
+        # (faint probability tails in empty space must not be labelled as tissue).
         best = prob.argmax(axis=0)
-        segmentation = np.where(prob.max(axis=0) > 0, indices[best], 0).astype(np.int32)
+        background = np.clip(1.0 - prob.sum(axis=0), 0.0, None)
+        segmentation = np.where(prob.max(axis=0) > background, indices[best], 0).astype(
+            np.int32
+        )
 
     affine = (
         resample_affine(seg_img.affine, factors) if factors is not None else seg_img.affine
