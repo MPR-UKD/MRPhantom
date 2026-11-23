@@ -59,6 +59,12 @@ class RegionConfig:
         S0:           Baseline signal intensity.
         fractions:    Compartment signal fractions; must sum to 1.
         D:            Compartment diffusivities in mm²/s; length == n_components.
+        probability_file: Optional NIfTI with this region's per-voxel
+                      probability (0–1, partial volume).  ``None`` uses the
+                      hard label map.
+        S0_cv:        Coefficient of variation of the smooth random texture
+                      applied to S0 (``0`` = off).
+        D_cv:         Same for the diffusivities (``0`` = off).
     """
 
     name: str
@@ -67,6 +73,9 @@ class RegionConfig:
     S0: float
     fractions: list[float]
     D: list[float]
+    probability_file: Path | None = None
+    S0_cv: float = 0.0
+    D_cv: float = 0.0
 
 
 @dataclass
@@ -81,6 +90,11 @@ class DWIConfig:
         image_dims:  Spatial dimensions ``[X, Y, Z]`` reported in the JSON.
         bvalues:     1-D array of b-values in s/mm².
         regions:     Map from NIfTI integer label → :class:`RegionConfig`.
+        texture_sigma: Smoothing width (voxels of the synthesised grid) of the
+                     texture fields used when a region sets ``S0_cv`` / ``D_cv``.
+        voxel_size:  Optional target voxel size in mm (scalar or per axis).
+                     Label / probability maps are block-averaged to it before
+                     synthesis; ``None`` keeps the native grid.
     """
 
     case_id: str
@@ -90,6 +104,8 @@ class DWIConfig:
     image_dims: list[int]
     bvalues: np.ndarray
     regions: dict[int, RegionConfig] = field(default_factory=dict)
+    texture_sigma: float = 2.0
+    voxel_size: float | tuple[float, ...] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +159,11 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
 
         is_null = (s0_raw is None) or (len(d_raw) == 0)
 
+        prob_raw = region_data.get("probability")
+        prob_file = (json_path.parent / prob_raw) if prob_raw else None
+        s0_cv = float(diff.get("S0_cv", 0.0) or 0.0)
+        d_cv = float(diff.get("D_cv", 0.0) or 0.0)
+
         if is_null:
             region = RegionConfig(
                 name=region_data["name"],
@@ -151,6 +172,9 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
                 S0=0.0,
                 fractions=[],
                 D=[],
+                probability_file=prob_file,
+                S0_cv=s0_cv,
+                D_cv=d_cv,
             )
             null_indices.append(region_data["index"])
         else:
@@ -161,6 +185,9 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
                 S0=float(s0_raw),
                 fractions=[float(f) for f in fractions_raw],
                 D=[float(d) for d in d_raw],
+                probability_file=prob_file,
+                S0_cv=s0_cv,
+                D_cv=d_cv,
             )
 
         raw_regions.append(region)
@@ -192,8 +219,15 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
                 S0=remaining.S0,
                 fractions=list(remaining.fractions),
                 D=list(remaining.D),
+                probability_file=region.probability_file,
+                S0_cv=region.S0_cv or remaining.S0_cv,
+                D_cv=region.D_cv or remaining.D_cv,
             )
 
+        if region.S0_cv < 0 or region.D_cv < 0:
+            raise ValueError(
+                f"Region {region.name!r} has a negative S0_cv / D_cv."
+            )
         if region.S0 < 0:
             raise ValueError(
                 f"Region {region.name!r} has negative S0 ({region.S0})."
@@ -229,4 +263,8 @@ def load_dwi_config(json_path: Path, bval_path: Path) -> DWIConfig:
         image_dims=list(data["image"]["dimensions"]),
         bvalues=bvalues,
         regions=regions,
+        texture_sigma=float(data.get("texture", {}).get("sigma", 2.0)),
+        voxel_size=(
+            tuple(vs) if isinstance(vs := data.get("resample", {}).get("voxel_size"), list) else vs
+        ),
     )

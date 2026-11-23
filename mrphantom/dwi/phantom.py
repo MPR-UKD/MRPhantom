@@ -43,7 +43,7 @@ import numpy as np
 from ..base import MRPhantom
 from ..io import save_hdf5, save_nifti
 from .config import DWIConfig, load_dwi_config
-from .synthesis import synthesize_phantom
+from .synthesis import synthesize_with_truth
 
 
 class DWIPhantom(MRPhantom):
@@ -81,6 +81,8 @@ class DWIPhantom(MRPhantom):
         self._signal: np.ndarray | None = None
         self._signal_gt: np.ndarray | None = None
         self._signal_img: nib.Nifti1Image | None = None
+        self._segmentation: np.ndarray | None = None
+        self._params: dict[str, np.ndarray] | None = None
 
     # ------------------------------------------------------------------
     # Class-level factory
@@ -141,6 +143,8 @@ class DWIPhantom(MRPhantom):
         self._signal = None
         self._signal_gt = None
         self._signal_img = None
+        self._segmentation = None
+        self._params = None
         return self
 
     def synthesize(self) -> "DWIPhantom":
@@ -191,9 +195,18 @@ class DWIPhantom(MRPhantom):
         """
         if config is None:
             config = self._config
-        self._signal, self._signal_gt, self._signal_img = synthesize_phantom(
-            config, snr=self.snr, rng=rng, snr_region=self.snr_region
+        result = synthesize_with_truth(
+            config,
+            snr=self.snr,
+            rng=rng,
+            snr_region=self.snr_region,
+            texture_seed=self.seed,
         )
+        self._signal = result.signal
+        self._signal_gt = result.signal_gt
+        self._signal_img = result.signal_img
+        self._segmentation = result.segmentation
+        self._params = result.params
 
     # ------------------------------------------------------------------
     # Introspection — extend base with snr_region
@@ -262,7 +275,7 @@ class DWIPhantom(MRPhantom):
                         self._signal,
                         self._signal_img,
                         self._config.bvalues,
-                        self._config.nifti_path,
+                        self._segmentation,
                         out_path,
                         case_id=self._config.case_id,
                         name=self._config.name,
@@ -270,6 +283,7 @@ class DWIPhantom(MRPhantom):
                         snr=self.snr,
                         snr_region=self.snr_region,
                         signal_gt=self._signal_gt,
+                        params=self._params,
                     )
                 )
             else:
@@ -326,6 +340,32 @@ class DWIPhantom(MRPhantom):
                 f"{type(self).__name__}.signal_gt accessed before synthesize()."
             )
         return self._signal_gt
+
+    @property
+    def segmentation(self) -> np.ndarray:
+        """Label map on the synthesised grid, shape ``(X, Y, Z)``.
+
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
+        """
+        if self._segmentation is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.segmentation accessed before synthesize()."
+            )
+        return self._segmentation
+
+    @property
+    def params(self) -> dict[str, np.ndarray]:
+        """Ground-truth parameter maps (see :class:`~mrphantom.dwi.synthesis.SynthesisResult`).
+
+        Raises:
+            RuntimeError: If :meth:`synthesize` has not been called.
+        """
+        if self._params is None:
+            raise RuntimeError(
+                f"{type(self).__name__}.params accessed before synthesize()."
+            )
+        return self._params
 
     @property
     def signal_img(self) -> nib.Nifti1Image:
