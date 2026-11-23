@@ -52,6 +52,19 @@ Each entry under `"regions"` maps one integer NIfTI label to a set of diffusion 
 
 ---
 
+### Optional: partial volume, texture, resampling
+
+All opt-in; cases without these keys behave exactly as before.
+
+| Where | Field | Description |
+|---|---|---|
+| region | `probability` | NIfTI (same grid as the segmentation) with this region's probability 0–1. Signal = Σ p_r · S_r. |
+| region `diffusivity` | `S0_cv`, `D_cv` | Relative std of a smooth random texture on S0 / D (default 0 = off). |
+| top level | `texture.sigma` | Smoothing width of the texture in voxels (default 2). Seed comes from `DWIPhantom(seed=...)`. |
+| top level | `resample.voxel_size` | Target voxel size in mm (scalar or `[x, y, z]`, integer multiple of the source). Labels and probabilities are block-averaged before synthesis. |
+
+HDF5 output additionally contains `/params` (region parameters, probabilities and texture scale fields) next to `/signal_gt`.
+
 ## Single-compartment vs multi-compartment regions
 
 **Single-compartment** (mono-exponential, e.g. spleen):

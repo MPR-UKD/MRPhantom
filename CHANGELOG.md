@@ -6,6 +6,32 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Partial volume:** a region may set `"probability": "<file.nii.gz>"` (0–1 map, same grid as the
+  segmentation); the signal is `S(x, b) = Σ_r p_r(x) · S_r(b)`. Regions without a file keep using
+  the hard label mask.
+- **Texture:** optional `S0_cv` / `D_cv` in a region's `diffusivity` multiply S0 / D by a smooth,
+  seeded random field (`"texture": {"sigma": <voxels>}` at top level, default 2). Seeded from
+  `DWIPhantom(seed=...)`, independent of the noise stream.
+- **Resampling:** top-level `"resample": {"voxel_size": <mm or [x, y, z]>}` block-averages labels
+  and probabilities to an integer multiple of the source voxel size before synthesis.
+- **Ground truth:** `synthesize_with_truth()` / `DWIPhantom.params` / `.segmentation` expose region
+  parameters, probabilities and texture scale fields; HDF5 files gain a `/params` group
+  (`PhantomData.params`). `/signal_gt` was already stored.
+- New dependency: `scipy` (Gaussian filtering for texture).
+
+### Changed
+
+- HDF5 `/segmentation` holds the label map on the synthesised grid (argmax of the probabilities
+  when partial volume or resampling is used; unchanged otherwise).
+
+Cases that use none of the new fields produce bit-identical output to 0.4.1.
+
+---
+
 ## [0.4.1] — 2026-10-19
 
 ### Changed

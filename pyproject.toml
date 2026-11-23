@@ -20,6 +20,7 @@ dependencies = [
 	"nibabel>=5.0",
 	"h5py>=3.10.0",
 	"tomli>=1.2; python_version < '3.11'",
+	"scipy>=1.10",
 ]
 
 [project.urls]
