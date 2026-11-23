@@ -290,6 +290,14 @@ class TestGroundTruth:
         out = save_hdf5(signal, img, BVALUES, halves_seg, tmp_path / "old.h5", signal_gt=gt)
         assert load_hdf5(out).params is None
 
+    def test_segmentation_treats_faint_probability_as_background(self, tmp_path, halves_seg):
+        """A voxel whose probabilities sum to far below 1 is labelled background."""
+        p1 = np.zeros((4, 4, 4)); p1[0, 0, 0] = 0.05; p1[1, 0, 0] = 0.9
+        cfg = _make_config(tmp_path, halves_seg, probs={1: p1, 2: np.zeros((4, 4, 4))})
+        res = synthesize_with_truth(cfg)
+        assert res.segmentation[0, 0, 0] == 0
+        assert res.segmentation[1, 0, 0] == 1
+
     def test_phantom_segmentation_matches_resampled_grid(self, tmp_path, halves_seg):
         """DWIPhantom.segmentation follows the synthesis grid."""
         cfg = dataclasses.replace(_make_config(tmp_path, halves_seg), voxel_size=2.0)
